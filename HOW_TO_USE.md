@@ -68,6 +68,8 @@ Esta plantilla usa SSR + HTMX con un contrato de contexto simple:
 
 Objetivo: crear un nuevo CRUD **en <10 minutos** usando Copilot y una `CrudConfig` como fuente de verdad, sin auto-discovery ni magia.
 
+Guía paso a paso completa: `TUTORIAL_CRUD.md`.
+
 ### Estructura canónica (por app)
 
 Dentro de `PROJECT_BASE/apps/<app_slug>/`:
