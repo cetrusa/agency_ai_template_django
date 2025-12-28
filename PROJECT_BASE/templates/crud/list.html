@@ -42,6 +42,37 @@ Notas HTMX:
       </div>
 
       <div class="d-flex gap-2">
+        {# Placeholder: Export (sin implementación en Step 1). #}
+        <div class="btn-group" role="group" aria-label="Export">
+          <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false">
+            <i class="bi bi-download"></i>
+            Exportar
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item"
+                 href="{{ crud_urls.export_csv }}{% if qs %}?{{ qs }}{% endif %}">
+                CSV
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item"
+                 href="{{ crud_urls.export_xlsx }}{% if qs %}?{{ qs }}{% endif %}">
+                XLSX
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item"
+                 href="{{ crud_urls.export_pdf }}{% if qs %}?{{ qs }}{% endif %}">
+                PDF
+              </a>
+            </li>
+          </ul>
+        </div>
+
         {# Botón "Nuevo" abre modal y trae contenido por HTMX. #}
         <button class="btn btn-primary btn-sm"
                 type="button"

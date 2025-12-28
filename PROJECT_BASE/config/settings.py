@@ -12,19 +12,54 @@ Si en el futuro se desea, puede dividirse en settings/base.py, settings/dev.py, 
 from __future__ import annotations
 
 import os
+import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Permite cargar variables desde .env en desarrollo/plantilla.
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-change-me")
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+# Permite cargar variables desde PROJECT_BASE/.env aunque el cwd sea distinto.
+load_dotenv(dotenv_path=BASE_DIR / ".env", override=False)
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",") if h.strip()]
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    raw = raw.strip().lower()
+    return raw in {"1", "true", "yes", "y", "on"}
+
+
+def _env_list(name: str, default: list[str] | None = None) -> list[str]:
+    raw = os.getenv(name)
+    if raw is None:
+        return list(default or [])
+    return [v.strip() for v in raw.split(",") if v.strip()]
+
+
+DEBUG = _env_bool("DJANGO_DEBUG", default=False)
+
+# En DEBUG se permite generar un SECRET_KEY efímero para facilitar onboarding.
+# En producción (DEBUG=False), el SECRET_KEY debe estar definido y no puede ser un placeholder.
+SECRET_KEY = (os.getenv("DJANGO_SECRET_KEY") or "").strip()
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = secrets.token_urlsafe(48)
+    else:
+        raise RuntimeError("DJANGO_SECRET_KEY es obligatorio cuando DJANGO_DEBUG=False")
+if SECRET_KEY.lower() in {"change_me", "changeme", "django-insecure-change-me"}:
+    if DEBUG:
+        # En dev se tolera, pero NO debe usarse en producción.
+        pass
+    else:
+        raise RuntimeError("DJANGO_SECRET_KEY no puede ser un placeholder cuando DJANGO_DEBUG=False")
+
+# Nunca usar '*' por defecto. En DEBUG, permitir localhost/127.0.0.1.
+ALLOWED_HOSTS = _env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    default=["localhost", "127.0.0.1"] if DEBUG else [],
+)
 
 
 INSTALLED_APPS = [
@@ -37,6 +72,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 1st party apps
     "apps.dashboard",
+    "apps.crud_example",
 ]
 
 
@@ -78,13 +114,24 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": os.getenv("DJANGO_DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.getenv("POSTGRES_DB", os.getenv("DJANGO_DB_NAME", "dashboard")),
-        "USER": os.getenv("POSTGRES_USER", os.getenv("DJANGO_DB_USER", "user")),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", os.getenv("DJANGO_DB_PASSWORD", "password")),
+        "NAME": os.getenv("POSTGRES_DB", os.getenv("DJANGO_DB_NAME", "")),
+        "USER": os.getenv("POSTGRES_USER", os.getenv("DJANGO_DB_USER", "")),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", os.getenv("DJANGO_DB_PASSWORD", "")),
         "HOST": os.getenv("DJANGO_DB_HOST", "db"),
         "PORT": os.getenv("DJANGO_DB_PORT", "5432"),
     }
 }
+
+if not DEBUG:
+    missing = []
+    if not DATABASES["default"]["NAME"]:
+        missing.append("POSTGRES_DB (o DJANGO_DB_NAME)")
+    if not DATABASES["default"]["USER"]:
+        missing.append("POSTGRES_USER (o DJANGO_DB_USER)")
+    if not DATABASES["default"]["PASSWORD"]:
+        missing.append("POSTGRES_PASSWORD (o DJANGO_DB_PASSWORD)")
+    if missing:
+        raise RuntimeError("Faltan variables de BD en producción: " + ", ".join(missing))
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -93,6 +140,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+# Baseline recomendada: longitud mínima 12.
+for v in AUTH_PASSWORD_VALIDATORS:
+    if v.get("NAME") == "django.contrib.auth.password_validation.MinimumLengthValidator":
+        v.setdefault("OPTIONS", {})
+        v["OPTIONS"].setdefault("min_length", 12)
 
 LANGUAGE_CODE = "es"
 TIME_ZONE = os.getenv("DJANGO_TIME_ZONE", "UTC")
@@ -110,6 +163,25 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Seguridad mínima para plantilla; endurecer en proyectos reales.
-CSRF_TRUSTED_ORIGINS = [
-    o.strip() for o in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
-]
+CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
+
+# Seguridad: defaults razonables (especialmente relevantes para HTMX + sesiones)
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = os.getenv("DJANGO_SESSION_COOKIE_SAMESITE", "Lax")
+CSRF_COOKIE_SAMESITE = os.getenv("DJANGO_CSRF_COOKIE_SAMESITE", "Lax")
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = _env_bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+    SESSION_COOKIE_SECURE = _env_bool("DJANGO_SESSION_COOKIE_SECURE", default=True)
+    CSRF_COOKIE_SECURE = _env_bool("DJANGO_CSRF_COOKIE_SECURE", default=True)
+    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
+    SECURE_HSTS_PRELOAD = _env_bool("DJANGO_SECURE_HSTS_PRELOAD", default=True)
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = os.getenv("DJANGO_SECURE_REFERRER_POLICY", "same-origin")
+    X_FRAME_OPTIONS = os.getenv("DJANGO_X_FRAME_OPTIONS", "DENY")
+
+    # Si estás detrás de un proxy (nginx/traefik), habilita esto.
+    if _env_bool("DJANGO_BEHIND_PROXY", default=False):
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

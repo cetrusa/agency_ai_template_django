@@ -2,7 +2,7 @@
 
 ## 1. Preparación
 - Clona este repositorio dentro de tu workspace.
-- Copia `PROJECT_BASE/.env.example` a `.env` y actualiza llaves.
+- Copia `PROJECT_BASE/.env.example` a `PROJECT_BASE/.env` y completa valores reales (sin placeholders).
 - Instala dependencias listadas en `PROJECT_BASE/requirements.txt` o usa los contenedores.
 
 ## 2. Guiar a la IA
