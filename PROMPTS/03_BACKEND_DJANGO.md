@@ -1,5 +1,7 @@
 # 03 Backend Django
 
+Antes de empezar: lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
+
 
 Rol: Backend Developer Senior (Django)
 

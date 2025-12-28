@@ -1,5 +1,7 @@
 # 02 Software Architect
 
+Antes de empezar: lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
+
 
 Rol: Arquitecto de Software Senior
 

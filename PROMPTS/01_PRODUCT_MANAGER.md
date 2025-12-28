@@ -1,5 +1,7 @@
 # 01 Product Manager
 
+Antes de empezar: lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
+
 
 Rol: Product Manager Senior
 

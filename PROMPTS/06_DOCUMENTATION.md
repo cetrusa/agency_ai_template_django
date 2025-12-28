@@ -1,5 +1,7 @@
 # 06 Documentation
 
+Antes de empezar: lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
+
 
 Rol: Technical Writer / Documentation Engineer
 

@@ -71,7 +71,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # 1st party apps
+    "apps.core.apps.CoreConfig",
     "apps.dashboard",
+    "apps.orgs",
     "apps.crud_example",
 ]
 
@@ -121,6 +123,16 @@ DATABASES = {
         "PORT": os.getenv("DJANGO_DB_PORT", "5432"),
     }
 }
+
+# DX: si estás en desarrollo local (DEBUG=True) y no configuraste Postgres,
+# permite usar SQLite para poder correr checks/migraciones sin docker.
+if DEBUG and not DATABASES["default"]["NAME"]:
+    engine = (DATABASES["default"]["ENGINE"] or "").strip()
+    if engine == "django.db.backends.postgresql":
+        DATABASES["default"] = {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": str(BASE_DIR / "db.sqlite3"),
+        }
 
 if not DEBUG:
     missing = []

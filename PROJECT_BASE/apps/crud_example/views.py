@@ -8,15 +8,18 @@ from urllib.parse import urlencode
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.http.response import HttpResponseBase
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from .models import Item
 
+from apps.core.crud.engine import build_list_context
+from apps.core.crud.registry import get_crud
+from .crud_config import CRUD_SLUG_ITEM
+
 from apps.core.services.exporting import build_pdf_table, build_xlsx, stream_csv
-from .forms import ItemForm
 
 
 @dataclass(frozen=True)
@@ -210,12 +213,39 @@ def _context_for_refresh(request: HttpRequest) -> dict:
 
 
 def list_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "crud/list.html", _context(request))
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_list(request):
+        return HttpResponseForbidden("Forbidden")
+    crud_urls = {
+        "list": reverse("crud_example:list"),
+        "table": reverse("crud_example:table"),
+        # Aunque Step 7 es list-only, el UI existente requiere estas URLs.
+        "create": reverse("crud_example:create"),
+        "bulk": "#",
+        "export_csv": reverse("crud_example:export_csv"),
+        "export_xlsx": reverse("crud_example:export_xlsx"),
+        "export_pdf": reverse("crud_example:export_pdf"),
+    }
+    ctx = build_list_context(config=config, request=request, crud_urls=crud_urls)
+    return render(request, "crud/list.html", ctx)
 
 
 def table_view(request: HttpRequest) -> HttpResponse:
     # Endpoint HTMX: solo el partial de tabla
-    return render(request, "crud/_table.html", _context(request))
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_list(request):
+        return HttpResponseForbidden("Forbidden")
+    crud_urls = {
+        "list": reverse("crud_example:list"),
+        "table": reverse("crud_example:table"),
+        "create": reverse("crud_example:create"),
+        "bulk": "#",
+        "export_csv": reverse("crud_example:export_csv"),
+        "export_xlsx": reverse("crud_example:export_xlsx"),
+        "export_pdf": reverse("crud_example:export_pdf"),
+    }
+    ctx = build_list_context(config=config, request=request, crud_urls=crud_urls)
+    return render(request, "crud/_table.html", ctx)
 
 
 def _export_queryset(request: HttpRequest):
@@ -224,32 +254,68 @@ def _export_queryset(request: HttpRequest):
 
 
 def export_csv_view(request: HttpRequest) -> HttpResponseBase:
-    qs = _export_queryset(request)
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_export(request):
+        return HttpResponseForbidden("Forbidden")
+    if not config.is_export_enabled():
+        return HttpResponseForbidden("Export disabled")
+    if not config.allows_format("csv"):
+        return HttpResponseForbidden("Format not allowed")
+
+    params = config.parse_params(request)
+    qs = config.queryset_for_list(request=request, params=params)
+
+    fields = config.get_export_fields() or ["name", "status", "created_at"]
+    headers = config.get_export_headers() or ["Nombre", "Estado", "Creado"]
     return stream_csv(
         queryset=qs,
-        fields=["name", "status", "created_at"],
-        headers=["Nombre", "Estado", "Creado"],
+        fields=fields,
+        headers=headers,
         filename_base="crud_example_items",
     )
 
 
 def export_xlsx_view(request: HttpRequest) -> HttpResponseBase:
-    qs = _export_queryset(request)
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_export(request):
+        return HttpResponseForbidden("Forbidden")
+    if not config.is_export_enabled():
+        return HttpResponseForbidden("Export disabled")
+    if not config.allows_format("xlsx"):
+        return HttpResponseForbidden("Format not allowed")
+
+    params = config.parse_params(request)
+    qs = config.queryset_for_list(request=request, params=params)
+
+    fields = config.get_export_fields() or ["name", "status", "created_at"]
+    headers = config.get_export_headers() or ["Nombre", "Estado", "Creado"]
     return build_xlsx(
         queryset=qs,
-        fields=["name", "status", "created_at"],
-        headers=["Nombre", "Estado", "Creado"],
+        fields=fields,
+        headers=headers,
         filename_base="crud_example_items",
         sheet_name="Items",
     )
 
 
 def export_pdf_view(request: HttpRequest) -> HttpResponseBase:
-    qs = _export_queryset(request)
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_export(request):
+        return HttpResponseForbidden("Forbidden")
+    if not config.is_export_enabled():
+        return HttpResponseForbidden("Export disabled")
+    if not config.allows_format("pdf"):
+        return HttpResponseForbidden("Format not allowed")
+
+    params = config.parse_params(request)
+    qs = config.queryset_for_list(request=request, params=params)
+
+    fields = config.get_export_fields() or ["name", "status", "created_at"]
+    headers = config.get_export_headers() or ["Nombre", "Estado", "Creado"]
     return build_pdf_table(
         queryset=qs,
-        fields=["name", "status", "created_at"],
-        headers=["Nombre", "Estado", "Creado"],
+        fields=fields,
+        headers=headers,
         title="CRUD Example · Items",
         filename_base="crud_example_items",
     )
@@ -268,8 +334,18 @@ def _hx_modal_success_refresh(request: HttpRequest) -> HttpResponse:
 
 
 def create_view(request: HttpRequest) -> HttpResponseBase:
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_create(request):
+        return HttpResponseForbidden("Forbidden")
+    form_class = config.get_create_form_class()
+    if form_class is None:
+        # Fallback explícito (solo si la config no declara). No auto-genera forms.
+        from .forms import ItemForm as _FallbackItemForm
+
+        form_class = _FallbackItemForm
+
     if request.method == "POST":
-        form = ItemForm(request.POST)
+        form = form_class(request.POST)
         if form.is_valid():
             with transaction.atomic():
                 form.save()
@@ -279,35 +355,44 @@ def create_view(request: HttpRequest) -> HttpResponseBase:
             request,
             "partials/modals/modal_form.html",
             {
-                "modal_title": "Nuevo Item",
+                "modal_title": config.get_create_modal_title(),
                 "modal_size": "md",
                 "modal_backdrop_close": False,
                 "form_action": reverse("crud_example:create"),
                 "form": form,
-                "submit_label": "Crear",
+                "submit_label": config.get_create_submit_label(),
             },
         )
 
-    form = ItemForm()
+    form = form_class()
     return render(
         request,
         "partials/modals/modal_form.html",
         {
-            "modal_title": "Nuevo Item",
+            "modal_title": config.get_create_modal_title(),
             "modal_size": "md",
             "modal_backdrop_close": False,
             "form_action": reverse("crud_example:create"),
             "form": form,
-            "submit_label": "Crear",
+            "submit_label": config.get_create_submit_label(),
         },
     )
 
 
 def edit_view(request: HttpRequest, id: int) -> HttpResponseBase:
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_edit(request):
+        return HttpResponseForbidden("Forbidden")
+    form_class = config.get_edit_form_class()
+    if form_class is None:
+        from .forms import ItemForm as _FallbackItemForm
+
+        form_class = _FallbackItemForm
+
     obj = get_object_or_404(Item, pk=id)
 
     if request.method == "POST":
-        form = ItemForm(request.POST, instance=obj)
+        form = form_class(request.POST, instance=obj)
         if form.is_valid():
             with transaction.atomic():
                 form.save()
@@ -317,31 +402,34 @@ def edit_view(request: HttpRequest, id: int) -> HttpResponseBase:
             request,
             "partials/modals/modal_form.html",
             {
-                "modal_title": f"Editar Item #{obj.pk}",
+                "modal_title": config.get_edit_modal_title(obj),
                 "modal_size": "md",
                 "modal_backdrop_close": False,
                 "form_action": reverse("crud_example:edit", kwargs={"id": obj.pk}),
                 "form": form,
-                "submit_label": "Guardar",
+                "submit_label": config.get_edit_submit_label(),
             },
         )
 
-    form = ItemForm(instance=obj)
+    form = form_class(instance=obj)
     return render(
         request,
         "partials/modals/modal_form.html",
         {
-            "modal_title": f"Editar Item #{obj.pk}",
+            "modal_title": config.get_edit_modal_title(obj),
             "modal_size": "md",
             "modal_backdrop_close": False,
             "form_action": reverse("crud_example:edit", kwargs={"id": obj.pk}),
             "form": form,
-            "submit_label": "Guardar",
+            "submit_label": config.get_edit_submit_label(),
         },
     )
 
 
 def delete_view(request: HttpRequest, id: int) -> HttpResponseBase:
+    config = get_crud(CRUD_SLUG_ITEM)
+    if not config.can_delete(request):
+        return HttpResponseForbidden("Forbidden")
     obj = get_object_or_404(Item, pk=id)
 
     if request.method == "POST":
@@ -353,11 +441,11 @@ def delete_view(request: HttpRequest, id: int) -> HttpResponseBase:
         request,
         "partials/modals/modal_confirm.html",
         {
-            "modal_title": f"Eliminar Item #{obj.pk}",
+            "modal_title": config.get_delete_modal_title(obj),
             "modal_size": "sm",
             "modal_backdrop_close": True,
             "confirm_action": reverse("crud_example:delete", kwargs={"id": obj.pk}),
-            "confirm_label": "Eliminar",
+            "confirm_label": config.get_delete_confirm_label(),
             "confirm_variant": "danger",
             "confirm_message": "¿Eliminar este registro?",
             "confirm_detail": obj.name,

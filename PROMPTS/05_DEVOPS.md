@@ -1,5 +1,7 @@
 # 05 DevOps
 
+Antes de empezar: lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
+
 
 Rol: DevOps Engineer Senior
 

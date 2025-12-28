@@ -1,34 +1,24 @@
+# PROJECT_BASE
 
-# AI Django Dashboard Agency 🚀
+Plantilla Django SSR (Templates) + HTMX para dashboards administrativos.
 
-Framework interno de una agencia de desarrollo impulsada por IA para crear
-Dashboards Administrativos profesionales en Django.
+## Qué incluye (implementado)
 
-## ¿Qué es esto?
+- UI base con Bootstrap 5 + estilos/tokens del proyecto.
+- CRUD Kit Enterprise V1 (listado + tabla partial con filtros/orden/paginación).
+- Sistema de modales reusable (HTMX) para formularios y confirmaciones.
+- Export engine server-side (CSV/XLSX/PDF).
+- docker-compose con PostgreSQL y Redis (Redis reservado para uso futuro).
 
-Una fábrica de proyectos Django tipo Admin Dashboard (estilo Sneat),
-lista para clonar y construir productos empresariales.
+## Qué NO incluye todavía (intencional)
 
-## Incluye
+- Automatización CRUD declarativa (tipo Backpack). Se diseña primero, se implementa después.
+- Multi-tenant y RBAC empresarial.
+- Background workers (Celery/RQ) y colas.
 
-- Prompts por rol de IA
-- Proyecto base Django
-- Docker listo
-- UI Bootstrap 5
-- CRUD + API base
-- Documentación clara
+## Uso
 
-## Flujo de uso
-
-1. Leer PROMPTS/00_MASTER_PROMPT.md
-2. Ejecutar los prompts por rol
-3. Usar PROJECT_BASE como plantilla
-4. Clonar PROJECT_BASE para nuevos proyectos
-
-## Stack
-
-- Django
-- Bootstrap 5
-- Docker
-- PostgreSQL
-- DRF
+Consulta:
+- `PROMPTS/00_CONTEXT.md` para filosofía y reglas.
+- `HOW_TO_USE.md` para levantar el entorno.
+- `PLATFORM_DECISIONS.md` para decisiones explícitas.

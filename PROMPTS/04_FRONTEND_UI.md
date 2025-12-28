@@ -1,5 +1,7 @@
 # 04 Frontend UI
 
+Antes de empezar: lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
+
 
 Rol: Frontend / UI Developer Senior
 
