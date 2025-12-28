@@ -1,0 +1,62 @@
+/*
+Design Tokens (CSS Variables)
+
+Objetivo:
+- Ser la fuente de verdad para colores, espaciados, radios y tipografía.
+- Evitar hardcode disperso en layout/components.
+- Permitir “re-teming” futuro sin reescribir estilos.
+*/
+
+:root {
+  /* Base */
+  --ds-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --ds-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Neutrales */
+  --ds-gray-0: #ffffff;
+  --ds-gray-25: #fcfcfd;
+  --ds-gray-50: #f9fafb;
+  --ds-gray-100: #f2f4f7;
+  --ds-gray-200: #e4e7ec;
+  --ds-gray-300: #d0d5dd;
+  --ds-gray-500: #667085;
+  --ds-gray-700: #344054;
+  --ds-gray-900: #101828;
+
+  /* Brand (puede ajustarse por proyecto) */
+  --ds-brand-50: #eff4ff;
+  --ds-brand-100: #d1e0ff;
+  --ds-brand-600: #3b82f6;
+  --ds-brand-700: #2563eb;
+
+  /* Estados */
+  --ds-success-600: #16a34a;
+  --ds-warning-600: #f59e0b;
+  --ds-danger-600: #ef4444;
+
+  /* Superficies */
+  --ds-bg: var(--ds-gray-50);
+  --ds-surface: var(--ds-gray-0);
+  --ds-surface-muted: var(--ds-gray-25);
+  --ds-border: var(--ds-gray-200);
+
+  /* Texto */
+  --ds-text: var(--ds-gray-900);
+  --ds-text-muted: var(--ds-gray-500);
+
+  /* Layout */
+  --ds-radius-sm: 10px;
+  --ds-radius-md: 14px;
+  --ds-radius-lg: 18px;
+
+  --ds-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --ds-shadow-md: 0 8px 24px rgba(16, 24, 40, 0.08);
+
+  --ds-sidebar-w: 280px;
+  --ds-navbar-h: 64px;
+
+  --ds-gap-1: 8px;
+  --ds-gap-2: 12px;
+  --ds-gap-3: 16px;
+  --ds-gap-4: 24px;
+}

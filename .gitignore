@@ -1,0 +1,67 @@
+# =============================================================
+# Plantilla Django (SSR + HTMX) — .gitignore seguro
+# Objetivo: NO subir secretos, entornos, caches ni artefactos.
+# =============================================================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+.env/
+.env.bak/
+
+# Pip / build
+pip-wheel-metadata/
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# ---- Django ----
+# Secretos / settings locales
+*.local.py
+local_settings.py
+
+# Bases de datos locales
+db.sqlite3
+db.sqlite3-journal
+
+# Media/Static generados
+media/
+staticfiles/
+
+# ---- Logs / runtime ----
+*.log
+logs/
+
+# ---- Testing / coverage ----
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ---- Cache / tooling ----
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---- IDEs ----
+.vscode/
+.idea/
+
+# ---- dotenv: permitir ejemplos ----
+!.env.example

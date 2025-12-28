@@ -1,0 +1,57 @@
+{#
+Sidebar: navegación server-driven.
+
+Regla:
+- Links tienen href real (deep-linking)
+- HTMX carga el contenido en #app-content y empuja URL
+#}
+<aside class="app-sidebar p-3">
+  <div class="mb-3 ds-muted small">MENÚ</div>
+
+  <nav class="nav flex-column gap-1">
+    <a class="nav-link d-flex align-items-center gap-2"
+       href="{% url 'dashboard:dashboard' %}"
+       hx-get="{% url 'dashboard:dashboard' %}"
+       hx-target="#app-content"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Dashboard</span>
+    </a>
+
+    <a class="nav-link d-flex align-items-center gap-2"
+       href="{% url 'dashboard:dashboard' %}?tab=reports"
+       hx-get="{% url 'dashboard:dashboard' %}?tab=reports"
+       hx-target="#app-content"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+      <i class="bi bi-bar-chart"></i>
+      <span class="sidebar-label">Reportes</span>
+    </a>
+
+    <a class="nav-link d-flex align-items-center gap-2"
+       href="{% url 'dashboard:dashboard' %}?tab=settings"
+       hx-get="{% url 'dashboard:dashboard' %}?tab=settings"
+       hx-target="#app-content"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+      <i class="bi bi-gear"></i>
+      <span class="sidebar-label">Ajustes</span>
+    </a>
+  </nav>
+
+  <hr class="my-4" />
+
+  <div class="ds-muted small mb-2">ACCIONES</div>
+  <div class="d-grid gap-2">
+    <a class="btn btn-outline-secondary btn-sm"
+       href="{% url 'dashboard:dashboard' %}"
+       hx-get="{% url 'dashboard:dashboard' %}"
+       hx-target="#app-content"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+      <i class="bi bi-arrow-repeat"></i>
+      <span class="sidebar-label">Recargar dashboard</span>
+    </a>
+  </div>
+</aside>
