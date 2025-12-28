@@ -1,111 +1,121 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
-REM Guardar snapshot del proyecto en Git (init/add/commit) y opcional push.
-REM Uso (recomendado):
-REM   SCRIPTS\github_publish_and_sync.bat "Mensaje de commit" "https://github.com/ORG/REPO.git"
-REM Ejemplos:
+REM =============================================================
+REM Sync Git -> GitHub (solo git)
+REM - Inicializa repo local si falta
+REM - Configura/actualiza remote origin
+REM - add/commit (si hay cambios)
+REM - pull --rebase (si existe main remota)
+REM - push a main
+REM
+REM Uso:
 REM   SCRIPTS\github_publish_and_sync.bat
-REM   SCRIPTS\github_publish_and_sync.bat "Punto estable: limpieza maestro + aliases"
-REM   SCRIPTS\github_publish_and_sync.bat "Punto estable" "https://github.com/cetrusa/pareto.git"
+REM   SCRIPTS\github_publish_and_sync.bat "mensaje commit"
+REM   SCRIPTS\github_publish_and_sync.bat "mensaje" "https://github.com/OWNER/REPO.git"
+REM =============================================================
 
-cd /d "%~dp0"
-rem Si estamos en la carpeta SCRIPTS, subir un nivel al root del proyecto
-for %%I in (.) do if /I "%%~nxI"=="SCRIPTS" cd ..
+set "DEFAULT_REMOTE_URL=https://github.com/cetrusa/agency_ai_template_django.git"
 
-where git >nul 2>nul
+REM Si se ejecuta con doble click, mantenemos la ventana abierta.
+set "PAUSE_ON_EXIT=0"
+if "%~1"=="" set "PAUSE_ON_EXIT=1"
+
+REM 1) Ir a raíz del proyecto
+set "SCRIPT_DIR=%~dp0"
+cd /d "%SCRIPT_DIR%" || goto :END
+for %%I in (.) do set "CURRENT_FOLDER_NAME=%%~nxI"
+if /I "%CURRENT_FOLDER_NAME%"=="SCRIPTS" cd ..
+
+REM 2) Verificar git
+where git >nul 2>&1
 if errorlevel 1 (
-  echo ERROR: Git no esta instalado o no esta en PATH.
-  echo Instala Git for Windows y reintenta.
-  exit /b 1
+  echo [ERROR] El comando 'git' no se encuentra. Instala Git for Windows y agrega al PATH.
+  goto :END
 )
 
-REM 1) Inicializar repo si no existe
-if not exist ".git" (
-  echo Inicializando repositorio Git...
-  git init
-  if errorlevel 1 exit /b 1
-) else (
-  echo Repo Git ya existe.
-)
+REM 3) Preparar argumentos
+set "COMMIT_MSG=%~1"
+set "REMOTE_URL=%~2"
 
-REM 1b) Limpieza del indice (no borra archivos del disco)
-REM - Saca del repo artefactos locales/no funcionales (DBs/backups) y carpeta archive_unused
-if exist "archive_unused\" (
-  git rm -r --cached "archive_unused" >nul 2>nul
-)
-
-for /f "delims=" %%f in ('git ls-files "*.db" "*.sqlite" "*.sqlite3" 2^>nul') do (
-  git rm --cached "%%f" >nul 2>nul
-)
-for /f "delims=" %%f in ('git ls-files "*.db.*" "*.backup_*" "*.bak" 2^>nul') do (
-  git rm --cached "%%f" >nul 2>nul
-)
-
-REM Estos ya estan en .gitignore, pero si quedaron trackeados, los removemos del indice.
-git ls-files --error-unmatch "installation_complete.txt" >nul 2>nul && git rm --cached "installation_complete.txt" >nul 2>nul
-git ls-files --error-unmatch "py_compile_err.txt" >nul 2>nul && git rm --cached "py_compile_err.txt" >nul 2>nul
-git ls-files --error-unmatch "error_log.txt" >nul 2>nul && git rm --cached "error_log.txt" >nul 2>nul
-
-REM 2) Preparar argumentos
-REM - Arg1: mensaje (opcional)
-REM - Arg2: remoto origin (opcional)
-set "ARG1=%~1"
-set "ARG2=%~2"
-
-set "MSG=%ARG1%"
-set "REMOTE_URL=%ARG2%"
-
-REM Si el usuario pasó solo una URL como primer argumento, tratarlo como REMOTE y autogenerar mensaje.
-if not "%ARG1%"=="" (
-  set "PFX=%ARG1:~0,4%"
-  if /i "%PFX%"=="http" (
-    set "REMOTE_URL=%ARG1%"
-    set "MSG="
+REM Permitir ejecutar: bat https://github.com/... (sin mensaje)
+if not "%COMMIT_MSG%"=="" (
+  set "PFX=%COMMIT_MSG:~0,4%"
+  if /I "!PFX!"=="http" (
+    set "REMOTE_URL=%COMMIT_MSG%"
+    set "COMMIT_MSG="
   )
 )
 
-if "%MSG%"=="" (
-  for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"`) do set "TS=%%i"
-  set "MSG=Backup: %TS%"
+if "%REMOTE_URL%"=="" set "REMOTE_URL=%DEFAULT_REMOTE_URL%"
+
+REM 4) Inicializar git si hace falta
+if not exist ".git" (
+  echo [INFO] Inicializando repositorio Git local...
+  git init
+  if errorlevel 1 (
+    echo [ERROR] Fallo git init.
+    goto :END
+  )
 )
 
-REM 3) Stage + commit
-echo Agregando cambios...
+REM Asegurar rama main
+git branch -M main >nul 2>&1
+
+REM 5) Configurar remote origin
+git remote get-url origin >nul 2>&1
+if errorlevel 1 (
+  echo [INFO] Agregando remote origin: %REMOTE_URL%
+  git remote add origin "%REMOTE_URL%"
+) else (
+  echo [INFO] Actualizando remote origin: %REMOTE_URL%
+  git remote set-url origin "%REMOTE_URL%" >nul 2>&1
+)
+
+REM 6) Add / Commit
+echo [INFO] Agregando cambios...
 git add -A
-if errorlevel 1 exit /b 1
 
 git diff --cached --quiet
-if not errorlevel 1 (
-  echo No hay cambios para commitear.
-  goto :PUSH_OPTIONAL
-)
-
-echo Creando commit: "%MSG%"
-git commit -m "%MSG%"
-if errorlevel 1 exit /b 1
-
-:PUSH_OPTIONAL
-REM 4) Configurar remoto si se proporciono URL
-if not "%REMOTE_URL%"=="" (
-  git remote add origin "%REMOTE_URL%" 2>nul
-  if errorlevel 1 (
-    git remote set-url origin "%REMOTE_URL%" >nul 2>nul
+if errorlevel 1 (
+  if "%COMMIT_MSG%"=="" (
+    for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"`) do set "TS=%%i"
+    set "COMMIT_MSG=chore: sync !TS!"
   )
+  echo [INFO] Commit: "!COMMIT_MSG!"
+  git commit -m "!COMMIT_MSG!"
+  if errorlevel 1 (
+    echo [ERROR] Fallo el commit.
+    goto :END
+  )
+) else (
+  echo [INFO] No hay cambios para commitear.
 )
 
-REM 5) Push si existe origin
-set "HAS_ORIGIN=0"
-for /f "delims=" %%r in ('git remote 2^>nul') do (
-  if /i "%%r"=="origin" set "HAS_ORIGIN=1"
+REM 7) Pull rebase si el remoto ya tiene main
+echo [INFO] Sincronizando con remoto...
+git ls-remote --heads origin main >nul 2>&1
+if not errorlevel 1 (
+  git pull origin main --rebase
 )
 
-if "%HAS_ORIGIN%"=="1" (
-  echo Haciendo push a origin - rama actual ...
-  git push -u origin HEAD
+REM 8) Push
+git push -u origin main
+if errorlevel 1 (
+  echo [ERROR] Fallo el push. Verifica autenticacion/conflictos.
+  goto :END
 )
+
+echo.
+echo [EXITO] Proyecto sincronizado en:
+echo         https://github.com/cetrusa/agency_ai_template_django
 
 :END
-echo Listo.
+if "%PAUSE_ON_EXIT%"=="1" (
+  echo.
+  echo Presiona cualquier tecla para salir...
+  pause >nul
+)
+
 endlocal
 exit /b 0
