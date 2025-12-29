@@ -10,7 +10,6 @@ services:
       - .env
     depends_on:
       - db
-      - redis
     ports:
       - "8000:8000"
 
@@ -23,6 +22,19 @@ services:
 
   redis:
     image: redis:7
+
+  worker:
+    build: .
+    command: python manage.py rqworker default
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    profiles:
+      - worker
 
 volumes:
   pgdata:

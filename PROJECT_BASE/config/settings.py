@@ -72,8 +72,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 1st party apps
     "apps.core.apps.CoreConfig",
+    "apps.core.navigation",
     "apps.dashboard",
     "apps.orgs",
+    "apps.organization_admin",
+    "apps.users_admin",
     "apps.crud_example",
 ]
 
@@ -102,6 +105,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.navigation.context_processors.navigation_context",
             ],
         },
     }
@@ -197,3 +201,14 @@ if not DEBUG:
     # Si estás detrás de un proxy (nginx/traefik), habilita esto.
     if _env_bool("DJANGO_BEHIND_PROXY", default=False):
         SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# RQ (infraestructura opcional: solo se usa si habilitas Redis y worker)
+RQ_QUEUES = {
+    "default": {
+        "URL": os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        "DEFAULT_TIMEOUT": int(os.getenv("RQ_DEFAULT_TIMEOUT", "300")),
+    },
+}
+
+# Convención de jobs: definir funciones en apps/<module>/jobs.py.
+# El servidor web no debe ejecutar tareas largas; usar worker RQ cuando aplique.

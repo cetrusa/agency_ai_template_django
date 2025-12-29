@@ -7,6 +7,8 @@ from django.db import models
 class Organization(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=80, unique=True)
+    logo = models.FileField(upload_to="org_logos/", blank=True, null=True)
+    base_color = models.CharField(max_length=7, default="#0d6efd", help_text="HEX Color")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

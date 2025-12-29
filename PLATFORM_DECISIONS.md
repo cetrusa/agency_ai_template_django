@@ -75,6 +75,19 @@ Regla: este documento **no es un roadmap**. No promete features no implementadas
 **Consecuencia**:
 - No debe asumirse Redis como requisito funcional hoy.
 
+### 6) RQ preparado pero opcional
+
+**Decisión**: la plantilla incluye configuración de colas RQ y un servicio `worker` opcional en docker-compose, pero no hay jobs activos ni dependencias obligatorias.
+
+**Por qué**:
+- Preparar la plataforma para offload de tareas largas sin bloquear el servidor web.
+- Mantener opcionalidad: el stack sigue funcionando si Redis o el worker no se levantan.
+
+**Consecuencia**:
+- Para usar RQ, se debe levantar Redis y el servicio `worker` (perfil `worker` en docker-compose) e instalar las dependencias opcionales correspondientes.
+- Los jobs vivirán en `apps/<module>/jobs.py` como funciones explícitas.
+- “RQ es infraestructura opcional preparada para escalabilidad, no parte del MVP funcional.”
+
 ---
 
 ## Lo que intencionalmente NO está incluido todavía

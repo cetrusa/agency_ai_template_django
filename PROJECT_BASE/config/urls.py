@@ -11,5 +11,8 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("crud-example/", include("apps.crud_example.urls")),
-    path("", include("apps.dashboard.urls")),
+    path("dashboard/", include("apps.dashboard.urls")),
+    path("organization/", include("apps.organization_admin.urls")),
+    path("users/", include("apps.users_admin.urls")),
+    path("", include("apps.dashboard.urls")),  # Default redirect
 ]
