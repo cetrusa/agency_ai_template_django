@@ -1,102 +1,174 @@
-# How To Use
+# Guía de Uso y Despliegue
 
-## 1. Preparación
-- Clona este repositorio dentro de tu workspace.
-- Copia `PROJECT_BASE/.env.example` a `PROJECT_BASE/.env` y completa valores reales (sin placeholders).
-- Instala dependencias listadas en `PROJECT_BASE/requirements.txt` o usa los contenedores.
+Esta guía detalla paso a paso cómo configurar, ejecutar y administrar la plataforma **Agency AI Dashboard**.
 
-Notas importantes:
-- El proyecto está optimizado para correr con `docker-compose` (PostgreSQL incluido).
-- `PROJECT_BASE/.env` no debe subirse al repo (se ignora por `.gitignore`).
+---
 
-## 2. Guiar a la IA
-- Escoge el prompt adecuado en la carpeta `PROMPTS` según el rol que estés emulando.
-- Antes de usar cualquier prompt, lee `PROMPTS/00_CONTEXT.md` (contexto canónico y reglas no negociables).
-- Ajusta el contexto con información del cliente, métricas y restricciones reales.
+## 1. Requisitos Previos
 
-## 3. Crear el proyecto
-- Ejecuta `SCRIPTS/create_project.sh` para generar un nuevo paquete basado en `PROJECT_BASE` (en macOS/Linux).
-- En Windows, replica los pasos manualmente siguiendo `SCRIPTS/first_run.md`.
+Antes de comenzar, asegúrate de tener instalado:
 
-## 4. Personalizar
-- Usa `SCRIPTS/rename_project.py` para actualizar nombres de módulos, apps y settings.
-- Agrega tus apps dentro de `PROJECT_BASE/apps` y plantillas en `PROJECT_BASE/templates`.
+*   **Git**: Para clonar el repositorio.
+*   **Docker Desktop**: Recomendado para ejecutar la base de datos y servicios auxiliares (Redis).
+*   **Python 3.10+**: Si planeas ejecutar el backend localmente (fuera de Docker).
+*   **VS Code (Opcional)**: Recomendado con extensiones de Python y Django.
 
-## 5. Ejecutar
-- `docker-compose up --build` levanta toda la pila (web + db + worker si lo configuras).
-- `python manage.py runserver` funciona para pruebas rápidas fuera de contenedor.
+---
 
-### Redis (presente pero reservado)
+## 2. Instalación Inicial
 
-Redis está incluido en `PROJECT_BASE/docker-compose.yml` por estándar de plataforma, pero **no es un requisito funcional hoy**.
+### Paso 1: Clonar el Repositorio
+```bash
+git clone <url-del-repo>
+cd AI_DJANGO_DASHBOARD_AGENCY_V1
+```
 
-¿Para qué se reserva?
-- Cache (por ejemplo, `django-redis`) para queries costosas o data de sesiones.
-- Cola de trabajos (Celery/RQ) para tareas largas (exportaciones masivas, OCR, scraping, IA, etc.).
-- Rate limiting, locks distribuidos y deduplicación de jobs.
+### Paso 2: Configurar Variables de Entorno
+Copia el archivo de ejemplo y configura tus credenciales locales.
+```bash
+cd PROJECT_BASE
+cp .env.example .env
+# En Windows: copy .env.example .env
+```
+> **Nota:** Revisa el archivo `.env`. Para desarrollo local rápido sin Docker, puedes cambiar `DJANGO_DB_ENGINE` a `django.db.backends.sqlite3`.
 
-¿Por qué está presente aunque no se use?
-- Para que el entorno base sea reproducible y esté listo para crecer sin rediseñar la infraestructura.
-- Para evitar que cada proyecto “reinvente” la pila cuando llegue el momento.
+### Paso 3: Entorno Virtual (Solo ejecución local)
+Si no vas a usar Docker para el contenedor web, crea un entorno virtual:
+```bash
+# En la raíz del proyecto
+python -m venv .venv
+# Activar en Windows
+.venv\Scripts\activate
+# Activar en Mac/Linux
+source .venv/bin/activate
 
-Si en tu proyecto aún no lo necesitas:
-- Puedes dejarlo levantado sin usarlo (costo local mínimo).
-- O puedes comentar el servicio `redis` y el `depends_on` en `docker-compose.yml` (cuando estés creando tu proyecto derivado).
+# Instalar dependencias
+pip install -r PROJECT_BASE/requirements.txt
+```
 
-### Cómo encajan CRUD + Modales + Export
+---
 
-Esta plantilla usa SSR + HTMX con un contrato de contexto simple:
+## 3. Inicialización de Base de Datos y Superusuario
 
-- **CRUD List Page**: `templates/crud/list.html`
-	- Renderiza layout + toolbar + filtros.
-	- La tabla vive en `#crud-table` y se carga por HTMX.
+La plataforma incluye un comando automatizado para configurar el entorno de desarrollo rápidamente.
 
-- **CRUD Table Partial**: `templates/crud/_table.html`
-	- Soporta ordenamiento y paginación vía HTMX.
-	- Acciones por fila usan `templates/crud/_row_actions.html`.
+### Opción A: Comando Automático (Recomendado)
+Este comando crea las migraciones, las aplica, y genera una **Organización Demo** y un **Superusuario**.
 
-- **Modales HTMX**: `templates/partials/modals/*` + `static/js/modals.js`
-	- Los botones abren un modal con `hx-get` a un endpoint.
-	- Los forms postean con `hx-post`.
-	- En éxito, el backend dispara `HX-Trigger: {"modalClose": true}` y refresca tabla (por evento u OOB swap según el flujo).
+```bash
+cd PROJECT_BASE
+python manage.py migrate
+python manage.py bootstrap_dev --with-samples
+```
 
-- **Exportaciones Server-Side**: `PROJECT_BASE/apps/core/services/exporting.py`
-	- CSV/XLSX/PDF se generan desde el queryset filtrado/ordenado.
-	- El dropdown “Exportar” preserva el querystring (filtros/orden).
+**¿Qué hace este comando?**
+1.  Crea una organización llamada "Demo Agency".
+2.  Crea un superusuario (admin) con credenciales por defecto.
+3.  Genera datos de prueba (si usas `--with-samples`).
+4.  Imprime en consola el **Email** y **Password** generados. **¡Guárdalos!**
 
-## 6. Scaffolding CRUD (Copilot-first)
+### Opción B: Creación Manual de Superusuario
+Si prefieres hacerlo manualmente:
+```bash
+cd PROJECT_BASE
+python manage.py migrate
+python manage.py createsuperuser
+```
+Sigue las instrucciones en pantalla para definir email y contraseña.
 
-Objetivo: crear un nuevo CRUD **en <10 minutos** usando Copilot y una `CrudConfig` como fuente de verdad, sin auto-discovery ni magia.
+---
 
-Guía paso a paso completa: `TUTORIAL_CRUD.md`.
+## 4. Ejecutar el Proyecto
 
-### Estructura canónica (por app)
+### Modo A: Docker (Full Stack)
+Levanta la base de datos (PostgreSQL), Redis y el servidor Web.
+```bash
+# Desde la raíz del proyecto (donde está docker-compose.yml dentro de PROJECT_BASE)
+cd PROJECT_BASE
+docker-compose up --build
+```
+*   Accede a: `http://localhost:8000`
 
-Dentro de `PROJECT_BASE/apps/<app_slug>/`:
+### Modo B: Híbrido (DB en Docker, Web Local)
+Ideal para desarrollo rápido (debugging, hot-reload).
 
-- `models.py` (modelo(s) del CRUD)
-- `forms.py` (ModelForm(s) usados por modales)
-- `crud_config.py` (única fuente de verdad declarativa)
-- `views.py` (list/table + create/edit/delete + export)
-- `urls.py` (rutas estables)
-- `apps.py` (registro explícito en `ready()` llamando `register()`)
-- `migrations/`
+1.  Levanta solo la base de datos:
+    ```bash
+    cd PROJECT_BASE
+    docker-compose up -d db
+    ```
+2.  Ejecuta el servidor Django localmente:
+    ```bash
+    # Asegúrate de tener el venv activado
+    cd PROJECT_BASE
+    python manage.py runserver
+    ```
+*   Accede a: `http://127.0.0.1:8000`
 
-### Contrato de querystring (para TODO CRUD)
+### Modo C: SQLite (Sin Docker)
+Si no tienes Docker instalado, edita `.env` y asegura:
+```ini
+DJANGO_DB_ENGINE=django.db.backends.sqlite3
+```
+Luego ejecuta:
+```bash
+cd PROJECT_BASE
+python manage.py migrate
+python manage.py runserver
+```
 
-Estos parámetros deben ser los “deep-links” reproducibles del CRUD:
+---
 
-- `q`: búsqueda (texto)
-- filtros: uno por cada `FilterDef.name` declarado (ej. `status`, etc.)
-- `sort`: key de columna (debe coincidir con `ColumnDef.key`)
-- `dir`: `asc` | `desc`
-- `page`: paginación
+## 5. Primeros Pasos en la Plataforma
 
-Regla de oro:
+1.  **Login:** Ve a `/accounts/login/` e ingresa con las credenciales generadas en el paso 3.
+2.  **Configuración de Empresa:**
+    *   Navega a **Empresa** en el menú lateral.
+    *   Haz clic en "Editar Configuración".
+    *   Sube tu logo, define los colores de marca y redes sociales.
+3.  **Gestión de Usuarios:**
+    *   Ve a **Usuarios** para invitar miembros a tu organización.
+4.  **Dashboard:**
+    *   Revisa los KPIs y gráficos de ejemplo en la página de inicio.
 
-- list/table/export deben parsear igual (`config.parse_params(request)`)
-- list/table/export deben filtrar/ordenar igual (`config.queryset_for_list(request=request, params=params)`)
-- export ignora paginación (exporta “todo lo que matchea”), pero respeta filtros + ordering
+---
+
+## 6. Scripts de Utilidad
+
+En la carpeta `SCRIPTS/` encontrarás herramientas útiles:
+
+*   `start.bat`: Inicia el entorno Docker (Windows).
+*   `stop.bat`: Detiene todos los contenedores del proyecto de forma segura.
+*   `create_project.sh`: (Linux/Mac) Scaffolding para iniciar un proyecto limpio basado en este template.
+
+---
+
+## 7. Solución de Problemas Comunes
+
+**Error: "Connection refused" a la base de datos**
+*   Asegúrate de que el contenedor `db` esté corriendo (`docker ps`).
+*   Verifica que las credenciales en `.env` coincidan con `docker-compose.yml`.
+
+**Error: "Relation does not exist"**
+*   Faltan aplicar migraciones. Ejecuta `python manage.py migrate`.
+
+**Olvide mi contraseña de admin**
+*   Ejecuta: `python manage.py changepassword <tu_email>`
+
+---
+
+## 8. Arquitectura y Desarrollo
+
+### Estructura de Apps
+*   `apps/core`: Lógica base, modelos globales (`GlobalConfig`), utilidades CRUD.
+*   `apps/dashboard`: Vista principal y widgets.
+*   `apps/organization_admin`: Gestión de la configuración de la empresa.
+*   `apps/users_admin`: Gestión de usuarios y roles.
+*   `apps/crud_example`: Ejemplo canónico de implementación CRUD.
+
+### Crear un nuevo CRUD
+Consulta `TUTORIAL_CRUD.md` para una guía detallada sobre cómo crear nuevos módulos usando el motor declarativo `CrudConfig`.
+
 
 ### Naming conventions
 
