@@ -3,6 +3,9 @@
 # Objetivo: NO subir secretos, entornos, caches ni artefactos.
 # =============================================================
 
+# Scripts locales de instalación
+SCRIPTS/install.bat
+
 # ---- Python ----
 __pycache__/
 *.py[cod]
