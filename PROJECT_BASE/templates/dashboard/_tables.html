@@ -1,10 +1,10 @@
-{#
+{% comment %}
 Tablas (con filtros + paginación)
 
 Patrón HTMX:
 - El contenedor completo (#table-card) se reemplaza via hx-swap="outerHTML".
 - El filtro usa hx-get para refrescar la tabla sin recarga.
-#}
+{% endcomment %}
 
 <div id="table-card" class="ds-card">
   <div class="ds-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -51,11 +51,11 @@ Patrón HTMX:
               </td>
               <td class="py-3">
                 {% if r.status == 'ok' %}
-                  <span class="ds-pill"><span class="ds-status-dot ds-dot-ok"></span> OK</span>
+                  <span class="ds-pill ds-pill-success">OK</span>
                 {% elif r.status == 'warn' %}
-                  <span class="ds-pill"><span class="ds-status-dot ds-dot-warn"></span> Alerta</span>
+                  <span class="ds-pill ds-pill-warning">Alerta</span>
                 {% else %}
-                  <span class="ds-pill"><span class="ds-status-dot ds-dot-down"></span> Caído</span>
+                  <span class="ds-pill ds-pill-danger">Caído</span>
                 {% endif %}
               </td>
               <td class="py-3 ds-muted">{{ r.updated }}</td>

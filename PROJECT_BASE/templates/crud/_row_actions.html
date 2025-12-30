@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _row_actions.html
 
 Acciones por fila.
@@ -23,7 +23,7 @@ Para mantener los templates simples, este partial asume la opción A:
 - item.urls.edit
 - item.urls.delete
 - item.urls.detail (opcional)
-#}
+{% endcomment %}
 
 <div class="btn-group" role="group" aria-label="Acciones">
   {% if item.urls.detail %}

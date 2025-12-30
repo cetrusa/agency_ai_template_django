@@ -1,10 +1,10 @@
-{#
+{% comment %}
 Sidebar: navegación server-driven.
 
 Regla:
 - Links tienen href real (deep-linking)
 - HTMX carga el contenido en #app-content y empuja URL
-#}
+{% endcomment %}
 {% load static %}
 <aside class="app-sidebar p-3">
   <div class="mb-3 ds-muted small">MENÚ</div>
@@ -21,6 +21,16 @@ Regla:
         <span class="sidebar-label">{{ module.label }}</span>
       </a>
     {% endfor %}
+
+    <!-- Accesos Directos (Manual) -->
+    <a class="nav-link d-flex align-items-center gap-2" href="{% url 'organization_admin:detail' %}">
+      <i class="bi bi-building"></i>
+      <span class="sidebar-label">Empresa</span>
+    </a>
+    <a class="nav-link d-flex align-items-center gap-2" href="{% url 'users_admin:list' %}">
+      <i class="bi bi-people"></i>
+      <span class="sidebar-label">Usuarios</span>
+    </a>
   </nav>
 
   <hr class="my-4" />
@@ -28,8 +38,8 @@ Regla:
   <div class="ds-muted small mb-2">ACCIONES</div>
   <div class="d-grid gap-2">
     <a class="btn btn-outline-secondary btn-sm"
-       href="{% url 'dashboard:index' %}"
-       hx-get="{% url 'dashboard:index' %}"
+       href="{% url 'dashboard:home' %}"
+       hx-get="{% url 'dashboard:home' %}"
        hx-target="#app-content"
        hx-swap="innerHTML"
        hx-push-url="true">

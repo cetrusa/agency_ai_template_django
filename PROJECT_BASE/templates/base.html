@@ -4,7 +4,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Dashboard{% endblock %}</title>
+    <title>{% block title %}{{ GLOBAL_CONFIG.site_name }}{% endblock %}</title>
+
+    {# Fonts: Public Sans (Sneat) #}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
 
     {# Bootstrap 5 (sin bundlers) #}
     <link
@@ -25,13 +33,22 @@
     <link href="{% static 'css/components.css' %}" rel="stylesheet" />
     <link href="{% static 'css/modals.css' %}" rel="stylesheet" />
 
+    {# Dynamic Theme Config #}
+    <style>
+      :root {
+        --ds-primary: {{ GLOBAL_CONFIG.primary_color }};
+        /* Simple RGB approximation for opacity layers - in prod use a template tag to convert hex to rgb */
+        /* --ds-primary-rgb: ...; */
+      }
+    </style>
+
     {% block head %}{% endblock %}
   </head>
 
-  {#
+  {% comment %}
     hx-headers: HTMX enviará el CSRF token en requests (útil para POST desde fragments).
     hx-history-elt: el contenido intercambiable mantiene historial de navegación.
-  #}
+  {% endcomment %}
   <body class="app"
         hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 

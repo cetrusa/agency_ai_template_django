@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _table.html
 
 Módulo de tabla enterprise (server-side):
@@ -32,7 +32,8 @@ Nota importante:
   el backend puede pasar además:
   - qs: string URL-encoded con filtros actuales SIN page (opcional, recomendado)
   Si qs no existe, se hará un fallback simple.
-#}
+{% endcomment %}
+{% load core_tags %}
 
 <div class="ds-card crud-table-card">
   <div class="ds-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -60,7 +61,7 @@ Nota importante:
             {% for col in columns %}
               <th class="py-3 {% if col.nowrap %}text-nowrap{% endif %}" scope="col">
                 {% if col.sortable %}
-                  {#
+                  {% comment %}
                     Sort contract:
                     - sort: col.key
                     - dir: asc|desc
@@ -68,7 +69,7 @@ Nota importante:
 
                     Recomendación backend:
                     - pasar qs (filtros sin page) para evitar lógica aquí.
-                  #}
+                  {% endcomment %}
                   {% if current_filters.sort == col.key and current_filters.dir == 'asc' %}
                     {% with next_dir='desc' %}
                       <a class="crud-sort-link"
@@ -134,8 +135,43 @@ Nota importante:
               </td>
 
               {% for cell in item.cells %}
-                <td class="py-3">
-                  {{ cell }}
+                <td class="py-3 {% if cell.col.nowrap %}text-nowrap{% endif %}">
+                  {% if cell.col.type == 'badge' %}
+                      {% with val=cell.value map=cell.col.extra.colors %}
+                        {% if val %}
+                            <span class="badge bg-label-{{ map|get_item:val|default:'primary' }}">
+                                {{ cell.col.extra.labels|get_item:val|default:val }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                      {% endwith %}
+                  {% elif cell.col.type == 'image' %}
+                      {% if cell.value %}
+                        <img src="{{ cell.value }}" 
+                             alt="Img" 
+                             class="d-block {% if cell.col.extra.rounded %}rounded-circle{% else %}rounded{% endif %}"
+                             height="{{ cell.col.extra.height|default:32 }}"
+                             width="{{ cell.col.extra.width|default:32 }}"
+                             style="object-fit: cover;">
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                  {% elif cell.col.type == 'boolean' %}
+                      {% if cell.value %}
+                        <i class="bx bx-check text-success fs-4"></i>
+                      {% else %}
+                        <i class="bx bx-x text-danger fs-4"></i>
+                      {% endif %}
+                  {% elif cell.col.type == 'link' %}
+                      <a href="{{ cell.value }}" target="{{ cell.col.extra.target|default:'_self' }}">
+                        {{ cell.value }}
+                      </a>
+                  {% elif cell.col.type == 'date' %}
+                      {{ cell.value|date:"d/m/Y H:i" }}
+                  {% else %}
+                      {{ cell.value }}
+                  {% endif %}
                 </td>
               {% endfor %}
 

@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _form.html
 
 Formulario como partial.
@@ -12,7 +12,7 @@ HTMX:
 - En POST con errores, backend devuelve ESTE partial dentro de _modal_form.html
   para renderizar errores.
 - En éxito, backend recomienda 204 + HX-Trigger (crudChanged + crudModalClose).
-#}
+{% endcomment %}
 
 <form class="crud-form"
       method="post"

@@ -1,47 +1,41 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, permission_required
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.contrib import messages
-from apps.orgs.models import Organization
-from .forms import OrganizationForm
+from apps.core.models import GlobalConfig
+from .forms import GlobalConfigForm
 
 @login_required
-@permission_required("orgs.change_organization", raise_exception=True)
 def detail(request: HttpRequest) -> HttpResponse:
-    # Single tenant assumption for MVP
-    org = Organization.objects.first()
-    if not org:
-        # Fallback if no org exists
-        org = Organization.objects.create(name="Mi Empresa", slug="mi-empresa")
+    config = GlobalConfig.load()
     
     context = {
-        "org": org,
-        "page_title": "Mi Empresa"
+        "config": config,
+        "page_title": "Configuración de Empresa"
     }
     
     if request.headers.get("HX-Request") == "true":
-        return render(request, "organization_admin/detail.html", context)
+        return render(request, "organization_admin/settings.html", context)
         
-    return render(request, "pages/shell.html", {"content_template": "organization_admin/detail.html", **context})
+    return render(request, "pages/shell.html", {"content_template": "organization_admin/settings.html", **context})
 
 @login_required
-@permission_required("orgs.change_organization", raise_exception=True)
 def edit(request: HttpRequest) -> HttpResponse:
-    org = Organization.objects.first()
+    config = GlobalConfig.load()
     
     if request.method == "POST":
-        form = OrganizationForm(request.POST, request.FILES, instance=org)
+        form = GlobalConfigForm(request.POST, request.FILES, instance=config)
         if form.is_valid():
             form.save()
-            messages.success(request, "Empresa actualizada correctamente")
+            messages.success(request, "Configuración actualizada correctamente")
             return redirect("organization_admin:detail")
     else:
-        form = OrganizationForm(instance=org)
+        form = GlobalConfigForm(instance=config)
     
     context = {
         "form": form,
-        "org": org,
-        "page_title": "Editar Empresa"
+        "config": config,
+        "page_title": "Editar Configuración"
     }
     
     if request.headers.get("HX-Request") == "true":

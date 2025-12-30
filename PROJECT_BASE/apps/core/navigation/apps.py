@@ -12,7 +12,7 @@ class NavigationConfig(AppConfig):
             slug="dashboard",
             label="Dashboard",
             icon="bi-speedometer2",
-            url_name="dashboard:index",
+            url_name="dashboard:home",
             kind="system"
         ))
         registry.register(Module(

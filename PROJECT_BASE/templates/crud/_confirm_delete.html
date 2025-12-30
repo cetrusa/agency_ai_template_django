@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _confirm_delete.html
 
 Confirmación de delete (modal).
@@ -13,7 +13,7 @@ HTMX:
 - En éxito, backend recomienda responder 204 + HX-Trigger:
   - {"crudChanged": true, "crudModalClose": true}
 - Para mostrar mensaje, backend puede devolver crud/_alerts.html con hx-swap-oob.
-#}
+{% endcomment %}
 
 <div class="modal-content" id="crudConfirmDeleteContent">
   <div class="modal-header">

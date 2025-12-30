@@ -1,4 +1,7 @@
-{#
+{% extends 'base.html' %}
+{% load static %}
+
+{% comment %}
 CRUD UI KIT · list.html
 
 Pantalla principal (full page SSR) que:
@@ -17,10 +20,7 @@ Contrato (backend):
 Notas HTMX:
 - #crud-table hace hx-get a crud_urls.table y se refresca al disparar el evento "crudChanged".
 - Los filtros usan hx-get y hx-push-url para mantener querystring compartible.
-#}
-
-{% extends 'base.html' %}
-{% load static %}
+{% endcomment %}
 
 {% block title %}{{ page_title|default:"Listado" }}{% endblock %}
 
@@ -38,84 +38,68 @@ Notas HTMX:
     <div class="crud-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
       <div>
         <div class="ds-title h4 mb-1">{{ page_title|default:entity_label_plural|default:"Listado" }}</div>
-        <div class="ds-muted">{{ total_count|default:0 }} registros</div>
+        <div class="ds-muted">
+          {{ entity_label_plural|default:"Registros" }}
+          {% if total_count is not None %}
+            <span class="badge bg-label-primary ms-1">{{ total_count }} registros</span>
+          {% endif %}
+        </div>
       </div>
 
       <div class="d-flex gap-2">
         {# Placeholder: Export (sin implementación en Step 1). #}
-        <div class="btn-group" role="group" aria-label="Export">
-          <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false">
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
             <i class="bi bi-download"></i>
-            Exportar
           </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <a class="dropdown-item"
-                 href="{{ crud_urls.export_csv }}{% if qs %}?{{ qs }}{% endif %}">
-                CSV
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item"
-                 href="{{ crud_urls.export_xlsx }}{% if qs %}?{{ qs }}{% endif %}">
-                XLSX
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item"
-                 href="{{ crud_urls.export_pdf }}{% if qs %}?{{ qs }}{% endif %}">
-                PDF
-              </a>
-            </li>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ crud_urls.export_csv }}">CSV</a></li>
+            <li><a class="dropdown-item" href="{{ crud_urls.export_xlsx }}">Excel</a></li>
+            <li><a class="dropdown-item" href="{{ crud_urls.export_pdf }}">PDF</a></li>
           </ul>
         </div>
 
+        {% if crud_urls.create %}
         {# Botón "Nuevo" abre modal y trae contenido por HTMX. #}
-        <button class="btn btn-primary btn-sm"
-                type="button"
+        <button class="btn btn-primary"
                 hx-get="{{ crud_urls.create }}"
-          hx-target="#modal-host"
-          hx-swap="innerHTML"
-                hx-indicator="#crud-indicator">
-          <i class="bi bi-plus-lg"></i>
-          Nuevo {{ entity_label|default:"" }}
+                hx-target="#appModal .modal-content"
+                hx-trigger="click"
+                data-bs-toggle="modal"
+                data-bs-target="#appModal">
+          <i class="bi bi-plus-lg me-1"></i>
+          Nuevo {{ entity_label|default:"Registro" }}
         </button>
+        {% endif %}
       </div>
     </div>
 
+    {# Filtros (server-driven). #}
     <div class="crud-filters mb-3">
       {% include 'crud/_filters.html' %}
     </div>
 
     {# Loading indicator global para requests de tabla/modales. #}
-    <div id="crud-indicator" class="crud-indicator htmx-indicator" aria-live="polite" aria-busy="true">
+    <div id="crud-indicator" class="htmx-indicator py-3 text-center text-muted">
       <div class="spinner-border spinner-border-sm" role="status" aria-label="Cargando"></div>
       <span class="ms-2">Cargando…</span>
     </div>
 
-    {#
+    {% comment %}
       Contenedor de tabla:
       - load: primera carga
       - crudChanged: refresco tras create/edit/delete/bulk (disparado por backend via HX-Trigger)
-    #}
+    {% endcomment %}
     <section id="crud-table"
              hx-get="{{ crud_urls.table }}"
              hx-trigger="load, crudChanged from:body"
+             hx-target="this"
              hx-swap="innerHTML"
              hx-indicator="#crud-indicator">
-      <div class="ds-card">
-        <div class="ds-card-body">
-          <div class="ds-skeleton ds-h-18 ds-w-220"></div>
-          <div class="ds-skeleton ds-h-360 mt-3"></div>
-        </div>
+      {# Initial state: skeleton o spinner #}
+      <div class="p-5 text-center text-muted">
+        <div class="spinner-border text-primary" role="status"></div>
       </div>
     </section>
   </div>
-{% endblock %}
-
-{% block body_end %}
-  <script src="{% static 'js/crud.js' %}"></script>
 {% endblock %}

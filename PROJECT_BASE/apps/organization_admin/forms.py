@@ -1,12 +1,25 @@
 from django import forms
-from apps.orgs.models import Organization
+from apps.core.models import GlobalConfig
 
-class OrganizationForm(forms.ModelForm):
+class GlobalConfigForm(forms.ModelForm):
     class Meta:
-        model = Organization
-        fields = ["name", "logo", "base_color"]
+        model = GlobalConfig
+        fields = [
+            "site_name", "logo", 
+            "primary_color", "secondary_color",
+            "company_address", "company_phone", "company_email",
+            "social_facebook", "social_twitter", "social_instagram", "social_linkedin"
+        ]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "site_name": forms.TextInput(attrs={"class": "form-control"}),
             "logo": forms.FileInput(attrs={"class": "form-control"}),
-            "base_color": forms.TextInput(attrs={"class": "form-control", "type": "color"}),
+            "primary_color": forms.TextInput(attrs={"class": "form-control", "type": "color", "style": "height: 38px; width: 100px;"}),
+            "secondary_color": forms.TextInput(attrs={"class": "form-control", "type": "color", "style": "height: 38px; width: 100px;"}),
+            "company_address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "company_phone": forms.TextInput(attrs={"class": "form-control"}),
+            "company_email": forms.EmailInput(attrs={"class": "form-control"}),
+            "social_facebook": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://facebook.com/..."}),
+            "social_twitter": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://twitter.com/..."}),
+            "social_instagram": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://instagram.com/..."}),
+            "social_linkedin": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://linkedin.com/..."}),
         }

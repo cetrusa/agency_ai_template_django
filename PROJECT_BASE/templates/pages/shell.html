@@ -3,11 +3,11 @@
 {% block title %}Dashboard · Shell{% endblock %}
 
 {% block content %}
-  {#
+  {% comment %}
     Shell server-driven:
     - Renderiza layout completo
     - Carga el primer módulo por HTMX
-  #}
+  {% endcomment %}
   <div id="shell-root"
        hx-get="{% url 'dashboard:dashboard' %}"
        hx-trigger="load"

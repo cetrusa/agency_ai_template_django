@@ -1,40 +1,17 @@
-<div class="ds-card">
+{% load core_tags %}
+{% for chart in charts %}
+<div class="ds-card mb-4">
   <div class="ds-card-header d-flex align-items-center justify-content-between">
     <div>
-      <div class="ds-title">Actividad</div>
-      <div class="ds-muted small">Ejemplo de chart (Chart.js) inicializado tras swaps HTMX.</div>
+      <div class="ds-title">{{ chart.title }}</div>
     </div>
-    <span class="ds-pill"><span class="ds-status-dot ds-dot-ok"></span> Live</span>
   </div>
 
   <div class="ds-card-body">
     <canvas
-      data-chart="demo"
-      data-labels='["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]'
-      data-values='[12,19,8,14,22,17,9]'
-      height="110"></canvas>
-
-    <hr class="my-4" />
-
-    <div class="row g-3">
-      <div class="col-12 col-md-4">
-        <div class="ds-muted small mb-1">Conversión</div>
-        <div class="progress ds-progress-sm">
-          <div class="progress-bar ds-w-62p"></div>
-        </div>
-      </div>
-      <div class="col-12 col-md-4">
-        <div class="ds-muted small mb-1">Retención</div>
-        <div class="progress ds-progress-sm">
-          <div class="progress-bar bg-success ds-w-74p"></div>
-        </div>
-      </div>
-      <div class="col-12 col-md-4">
-        <div class="ds-muted small mb-1">Errores</div>
-        <div class="progress ds-progress-sm">
-          <div class="progress-bar bg-warning ds-w-18p"></div>
-        </div>
-      </div>
-    </div>
+      data-chart-def
+      data-config='{{ chart|to_json|safe }}'
+      height="{{ chart.height }}"></canvas>
   </div>
 </div>
+{% endfor %}

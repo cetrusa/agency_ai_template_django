@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _modal_form.html
 
 Modal reutilizable (Bootstrap) para Create/Edit.
@@ -22,7 +22,7 @@ HTMX:
 - En éxito, backend recomienda responder 204 + headers:
   - HX-Trigger: {"crudChanged": true, "crudModalClose": true}
   - (opcional) además devolver alerts OOB en otra respuesta.
-#}
+{% endcomment %}
 
 <div class="modal-content" id="crudModalContent">
   <div class="modal-header">

@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _alerts.html
 
 Mensajes reutilizables.
@@ -14,7 +14,7 @@ Recomendación HTMX (post acciones):
 
 Ejemplo respuesta backend (fragment):
 <div id="crud-alerts" hx-swap-oob="true">...alerts...</div>
-#}
+{% endcomment %}
 
 {% if messages or alerts %}
   <div class="crud-alerts">

@@ -42,18 +42,24 @@ class ItemCrudConfig(CrudConfig):
         ColumnDef(
             key="status",
             label="Estado",
+            type="badge",
+            extra={
+                "colors": {"active": "success", "inactive": "secondary"},
+                "labels": {"active": "Activo", "inactive": "Inactivo"}
+            },
             sortable=True,
             nowrap=True,
             order_by=("status",),
-            value=lambda o: o.get_status_display(),
+            value=lambda o: o.status,
         ),
         ColumnDef(
             key="created_at",
             label="Creado",
+            type="date",
             sortable=True,
             nowrap=True,
             order_by=("created_at",),
-            value=lambda o: o.created_at.strftime("%Y-%m-%d"),
+            value=lambda o: o.created_at,
         ),
     ]
 

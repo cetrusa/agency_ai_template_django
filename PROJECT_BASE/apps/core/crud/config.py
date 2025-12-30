@@ -195,13 +195,13 @@ class CrudConfig:
     def columns_for_template(self) -> list[dict]:
         return [c.to_template_dict() for c in self.list_columns]
 
-    def row_cells(self, obj: Any) -> list[str]:
-        cells: list[str] = []
+    def row_cells(self, obj: Any) -> list[Any]:
+        cells: list[Any] = []
         for c in self.list_columns:
             if c.value:
-                cells.append(str(c.value(obj)))
+                cells.append(c.value(obj))
             else:
-                cells.append(str(getattr(obj, c.key, "")))
+                cells.append(getattr(obj, c.key, ""))
         return cells
 
     def row_urls(self, obj: Any, request: HttpRequest, params: CrudParams) -> dict:
@@ -271,10 +271,20 @@ class CrudConfig:
                     if urls.get(k) and urls[k] not in {"#", None} and "?" not in str(urls[k]):
                         urls[k] = f"{urls[k]}?{qs_with_page}"
 
+            # Build rich cells with column definition
+            raw_cells = self.row_cells(obj)
+            rich_cells = []
+            for i, val in enumerate(raw_cells):
+                col = self.list_columns[i]
+                rich_cells.append({
+                    "value": val,
+                    "col": col.to_template_dict()
+                })
+
             rows.append(
                 {
                     "id": getattr(obj, "pk"),
-                    "cells": self.row_cells(obj),
+                    "cells": rich_cells,
                     "urls": urls,
                 }
             )

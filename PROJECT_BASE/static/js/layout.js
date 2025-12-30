@@ -66,9 +66,15 @@ Solo para:
   }
 
   function initDemoCharts(root) {
-    // Server-driven: el servidor envía data-*; el cliente solo pinta.
     if (!window.Chart) return;
-    root.querySelectorAll("canvas[data-chart='demo']").forEach((canvas) => {
+
+    // Helper para obtener colores de CSS variables
+    const getVar = (name) => {
+        const val = getComputedStyle(document.body).getPropertyValue(`--ds-${name}`).trim();
+        return val || name; // Fallback si es un hex directo
+    };
+
+    root.querySelectorAll("canvas[data-chart-def]").forEach((canvas) => {
       // Re-init seguro tras HTMX swaps.
       const existing = charts.get(canvas);
       if (existing) {
@@ -76,41 +82,51 @@ Solo para:
         charts.delete(canvas);
       }
 
-      let labels = [];
-      let values = [];
+      let config = {};
       try {
-        labels = JSON.parse(canvas.getAttribute("data-labels") || "[]");
-        values = JSON.parse(canvas.getAttribute("data-values") || "[]");
+        config = JSON.parse(canvas.getAttribute("data-config") || "{}");
       } catch (_) {
-        // Si el JSON es inválido, no pintamos el chart.
         return;
       }
 
+      // Map datasets colors
+      const datasets = (config.datasets || []).map(ds => ({
+          label: ds.label,
+          data: ds.data,
+          backgroundColor: getVar(ds.color),
+          borderColor: getVar(ds.color),
+          borderWidth: 2,
+          tension: 0.35,
+          pointRadius: 3,
+          fill: ds.fill
+      }));
+
       const chart = new window.Chart(canvas, {
-        type: "line",
+        type: config.type || "line",
         data: {
-          labels,
-          datasets: [
-            {
-              label: "Eventos",
-              data: values,
-              borderWidth: 2,
-              tension: 0.35,
-              pointRadius: 2,
-            },
-          ],
+          labels: config.labels || [],
+          datasets: datasets
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { usePointStyle: true }
+            }
           },
           scales: {
-            x: { grid: { display: false } },
-            y: { grid: { color: "rgba(16, 24, 40, 0.06)" } },
-          },
-        },
+            y: {
+              beginAtZero: true,
+              grid: { color: "rgba(16, 24, 40, 0.06)" }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
       });
 
       charts.set(canvas, chart);

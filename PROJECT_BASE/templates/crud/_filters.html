@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _filters.html
 
 Barra de filtros server-driven.
@@ -17,7 +17,7 @@ Contrato (backend):
 
 Nota:
 - Este form NO hace submit tradicional; HTMX refresca la tabla.
-#}
+{% endcomment %}
 
 <form class="ds-card crud-filters-card"
       hx-get="{{ crud_urls.table }}"

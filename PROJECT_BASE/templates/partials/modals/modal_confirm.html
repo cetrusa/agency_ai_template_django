@@ -1,4 +1,4 @@
-{#
+{% comment %}
 Modal System · modal_confirm.html
 
 Modal para confirmaciones.
@@ -15,7 +15,7 @@ Context esperado:
 HTMX:
 - hx-post a confirm_action
 - En éxito: 204 + HX-Trigger {"crudChanged": true, "modalClose": true}
-#}
+{% endcomment %}
 
 {% extends 'partials/modals/modal_base.html' %}
 

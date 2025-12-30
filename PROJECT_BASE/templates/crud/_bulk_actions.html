@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _bulk_actions.html
 
 Acciones masivas.
@@ -14,7 +14,7 @@ HTMX:
 
 JS (crud.js):
 - Gestiona checkboxes, habilita/deshabilita esta barra, y rellena el input hidden.
-#}
+{% endcomment %}
 
 <div class="crud-bulk" data-crud-bulk hidden>
   <form class="d-flex flex-wrap align-items-center gap-2"
@@ -29,8 +29,7 @@ JS (crud.js):
 
     <input type="hidden" name="ids" value="" data-crud-selected-ids />
 
-    <span class="ds-pill" aria-label="Seleccionados">
-      <span class="ds-status-dot ds-dot-ok"></span>
+    <span class="ds-pill ds-pill-info" aria-label="Seleccionados">
       <span><span data-crud-selected-count>0</span> seleccionados</span>
     </span>
 

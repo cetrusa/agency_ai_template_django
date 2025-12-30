@@ -20,10 +20,10 @@ a {
 }
 
 .ds-surface {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-md);
-  box-shadow: var(--ds-shadow-sm);
+  background: var(--ds-bg-surface);
+  border: 0;
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-card);
 }
 
 .ds-muted {

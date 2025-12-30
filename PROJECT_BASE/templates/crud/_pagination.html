@@ -1,4 +1,4 @@
-{#
+{% comment %}
 CRUD UI KIT · _pagination.html
 
 Paginación server-side (HTMX).
@@ -11,7 +11,7 @@ Contrato (backend):
 HTMX:
 - hx-get refresca #crud-table
 - hx-push-url mantiene querystring
-#}
+{% endcomment %}
 
 {% if page_obj and page_obj.paginator.num_pages > 1 %}
   <nav aria-label="Paginación">

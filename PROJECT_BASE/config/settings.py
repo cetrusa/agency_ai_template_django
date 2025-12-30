@@ -106,6 +106,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.navigation.context_processors.navigation_context",
+                "apps.core.context_processors.global_config_context",
             ],
         },
     }
@@ -175,6 +176,9 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # En producción (o dentro del contenedor) se puede ejecutar collectstatic.
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
@@ -212,3 +216,8 @@ RQ_QUEUES = {
 
 # Convención de jobs: definir funciones en apps/<module>/jobs.py.
 # El servidor web no debe ejecutar tareas largas; usar worker RQ cuando aplique.
+
+# --- Authentication ---
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"

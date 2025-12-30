@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable
 
 from django.db.models import QuerySet
@@ -17,12 +17,16 @@ class ColumnDef:
 
     - key: sort key público (querystring: sort=<key>)
     - label: texto visible
+    - type: tipo de visualización (text, badge, image, boolean, link, date, currency)
+    - extra: configuración extra para el tipo (ej: mapa de colores para badge)
     - order_by: campo(s) reales para QuerySet.order_by
     - value: función que produce el string final para la celda
     """
 
     key: str
     label: str
+    type: str = "text"
+    extra: dict = field(default_factory=dict)
     sortable: bool = True
     nowrap: bool = False
 
@@ -33,6 +37,8 @@ class ColumnDef:
         return {
             "key": self.key,
             "label": self.label,
+            "type": self.type,
+            "extra": self.extra,
             "sortable": self.sortable,
             "nowrap": self.nowrap,
         }

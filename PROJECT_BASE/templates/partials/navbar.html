@@ -14,9 +14,13 @@
          hx-get="{% url 'dashboard:home' %}"
          hx-target="#app-content"
          hx-swap="innerHTML"
-         hx-push-url="true">Agency Dashboard</a>
-      <span class="ds-pill d-none d-md-inline-flex">
-        <span class="ds-status-dot ds-dot-ok"></span>
+         hx-push-url="true">
+         {% if GLOBAL_CONFIG.logo %}
+            <img src="{{ GLOBAL_CONFIG.logo.url }}" alt="{{ GLOBAL_CONFIG.site_name }}" height="24" class="d-inline-block align-text-top me-2">
+         {% endif %}
+         {{ GLOBAL_CONFIG.site_name }}
+      </a>
+      <span class="ds-pill ds-pill-primary d-none d-md-inline-flex">
         <span class="sidebar-label">Plantilla UI</span>
       </span>
     </div>
@@ -30,6 +34,28 @@
         <i class="bi bi-plus-lg"></i>
         <span class="d-none d-sm-inline">Nuevo</span>
       </button>
+
+      <div class="dropdown">
+        <button class="btn btn-text dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <span class="d-none d-md-inline small fw-medium">{{ request.user.username|default:"Usuario" }}</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+          <li><h6 class="dropdown-header text-uppercase small">Cuenta</h6></li>
+          <li><span class="dropdown-item-text small text-muted">{{ request.user.email|default:"Sin email" }}</span></li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item text-danger">
+                <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </nav>

@@ -1,4 +1,4 @@
-{#
+{% comment %}
 Modal System · modal_form.html
 
 Modal base para formularios.
@@ -21,7 +21,7 @@ HTMX:
 - Responder 204 con headers:
   - HX-Trigger: {"crudChanged": true, "modalClose": true}
   - (opcional) devolver alerts OOB aparte.
-#}
+{% endcomment %}
 
 {% extends 'partials/modals/modal_base.html' %}
 

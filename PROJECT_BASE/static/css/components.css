@@ -1,25 +1,40 @@
 /*
-Components
-
-Componentes “finos” (presentación) encima de Bootstrap.
+Components - Sneat Style
 */
 
 .ds-card {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-lg);
-  box-shadow: var(--ds-shadow-sm);
+  background: var(--ds-bg-surface);
+  border: 0; /* No border in Sneat */
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-card);
+  transition: box-shadow 0.3s ease-in-out;
+  margin-bottom: 1.5rem;
+}
+
+.ds-card:hover {
+  box-shadow: var(--ds-shadow-hover);
 }
 
 .ds-card-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--ds-border);
+  padding: 1.5rem;
+  border-bottom: 0; /* Cleaner look */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ds-card-header h5 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ds-text-heading);
 }
 
 .ds-card-body {
-  padding: 16px;
+  padding: 1.5rem;
+  padding-top: 0; /* If header exists */
 }
 
+/* KPIs */
 .ds-kpi {
   display: flex;
   align-items: center;
@@ -28,42 +43,84 @@ Componentes “finos” (presentación) encima de Bootstrap.
 }
 
 .ds-kpi-value {
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ds-text-heading);
+  margin-bottom: 0.25rem;
 }
 
-.ds-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--ds-gray-50);
-  border: 1px solid var(--ds-border);
-  color: var(--ds-gray-700);
+.ds-kpi-label {
   font-size: 0.875rem;
-}
-
-.ds-status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.ds-dot-ok { background: var(--ds-success-600); }
-.ds-dot-warn { background: var(--ds-warning-600); }
-.ds-dot-down { background: var(--ds-danger-600); }
-
-.ds-table thead th {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--ds-text-muted);
 }
 
+/* Pills & Badges */
+.ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.35em 0.65em;
+  border-radius: 0.25rem; /* Slightly squared */
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.ds-pill-primary { background: rgba(105, 108, 255, 0.16); color: var(--ds-primary); }
+.ds-pill-success { background: rgba(113, 221, 55, 0.16); color: var(--ds-success); }
+.ds-pill-warning { background: rgba(255, 171, 0, 0.16); color: var(--ds-warning); }
+.ds-pill-danger { background: rgba(255, 62, 29, 0.16); color: var(--ds-danger); }
+.ds-pill-info { background: rgba(3, 195, 236, 0.16); color: var(--ds-info); }
+
+/* Tables */
+.ds-table {
+  width: 100%;
+  margin-bottom: 0;
+  color: var(--ds-text-body);
+  vertical-align: top;
+  border-color: var(--ds-border-color);
+}
+
+.ds-table thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--ds-text-heading);
+  background-color: var(--ds-gray-50);
+  border-bottom: 0;
+  padding: 0.75rem 1.25rem;
+}
+
+.ds-table tbody td {
+  padding: 0.75rem 1.25rem;
+  vertical-align: middle;
+  border-bottom-width: 1px;
+}
+
+/* Buttons Override */
+.btn {
+  box-shadow: 0 0.125rem 0.25rem 0 rgba(105, 108, 255, 0.4);
+  border-radius: var(--ds-radius-btn);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  padding: 0.4375rem 1.25rem;
+}
+
+.btn-primary {
+  background-color: var(--ds-primary);
+  border-color: var(--ds-primary);
+}
+
+.btn-primary:hover {
+  background-color: #5f61e6;
+  border-color: #5f61e6;
+  transform: translateY(-1px);
+}
+
 .ds-skeleton {
-  border-radius: 12px;
+  border-radius: var(--ds-radius-card);
   background: linear-gradient(90deg, var(--ds-gray-100), var(--ds-gray-50), var(--ds-gray-100));
   background-size: 220% 100%;
   animation: ds-shimmer 1.2s ease-in-out infinite;
