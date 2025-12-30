@@ -34,6 +34,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--with-samples",
+            "--with_samples",
             action="store_true",
             help="Crea items de ejemplo para probar UI.",
         )
