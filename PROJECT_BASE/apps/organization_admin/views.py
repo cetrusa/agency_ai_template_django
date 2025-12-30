@@ -1,12 +1,35 @@
+"""Vistas para gestión de configuración global de empresa (Singleton).
+
+GlobalConfig es un modelo Singleton que solo tiene 1 registro (pk=1).
+Las vistas detail y edit son las únicas operaciones CRUD aplicables.
+Los permisos se validan al nivel de vista para garantizar acceso seguro.
+"""
+
+from __future__ import annotations
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.contrib import messages
 from apps.core.models import GlobalConfig
 from .forms import GlobalConfigForm
 
+
+def _check_permission(user, perm: str) -> bool:
+    """Verifica si el usuario tiene el permiso especificado."""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    return user.has_perm(perm)
+
 @login_required
 def detail(request: HttpRequest) -> HttpResponse:
+    """Mostrar detalles de la configuración global (singleton)."""
+    # Validar permisos: usuario debe ser superusuario o tener change_globalconfig
+    if not _check_permission(request.user, "core.change_globalconfig"):
+        return HttpResponseForbidden("No tienes permisos para acceder a esta sección")
+    
     config = GlobalConfig.load()
     
     context = {
@@ -20,7 +43,12 @@ def detail(request: HttpRequest) -> HttpResponse:
     return render(request, "pages/shell.html", {"content_template": "organization_admin/settings.html", **context})
 
 @login_required
-def edit(request: HttpRequest) -> HttpResponse:
+def """Editar configuración global (singleton)."""
+    edit(request: HttpRequest) -> HttpResponse:
+    # Validar permisos: usuario debe ser superusuario o tener change_globalconfig
+    if not _check_permission(request.user, "core.change_globalconfig"):
+        return HttpResponseForbidden("No tienes permisos para acceder a esta sección")
+    
     config = GlobalConfig.load()
     
     if request.method == "POST":
@@ -33,7 +61,7 @@ def edit(request: HttpRequest) -> HttpResponse:
         form = GlobalConfigForm(instance=config)
     
     context = {
-        "form": form,
+        "form": form, de Empresa
         "config": config,
         "page_title": "Editar Configuración"
     }

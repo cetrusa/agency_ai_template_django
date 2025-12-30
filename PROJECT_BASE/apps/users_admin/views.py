@@ -1,12 +1,26 @@
+"""Vistas para gestión de usuarios del sistema.
+
+POLÍTICA DE ELIMINACIÓN:
+Los usuarios NUNCA se eliminan físicamente de la base de datos.
+Solo se pueden desactivar (is_active=False) para:
+- Mantener integridad referencial en auditorías
+- Preservar historial de acciones
+- Evitar pérdida de datos relacionados
+- Cumplir con normativas de trazabilidad
+
+Las vistas de "delete" realmente ejecutan un toggle de estado (activar/desactivar).
+"""
+
 from __future__ import annotations
 
 from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.http import HttpRequest, HttpResponse, HttpResponseBase, HttpResponseForbidden
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.contrib import messages
 
 from apps.core.crud.engine import build_list_context
 from apps.core.crud.registry import get_crud
@@ -24,7 +38,7 @@ def _crud_urls() -> dict:
         "list": reverse("users_admin:list"),
         "table": reverse("users_admin:table"),
         "create": reverse("users_admin:create"),
-        "bulk": "#",
+        "bulk": "#",  # No implementado aún
         "export_csv": reverse("users_admin:export_csv"),
         "export_xlsx": reverse("users_admin:export_xlsx"),
         "export_pdf": reverse("users_admin:export_pdf"),
@@ -76,6 +90,7 @@ def _build_context_with_params(request: HttpRequest, params) -> dict:
         "page_obj": page_obj,
         "total_count": qs.count(),
         "qs": config.build_qs_without_page(params),
+        "bulk_actions": [],  # Deshabilitado por ahora
     }
 
 
@@ -83,8 +98,9 @@ def _hx_modal_success_refresh(request: HttpRequest) -> HttpResponse:
     config = get_crud(CRUD_SLUG_USERS)
     params = _params_from_hx_current_url(request) or config.parse_params(request)
     ctx = _build_context_with_params(request, params)
-    resp = render(request, "crud_example/_oob_table_refresh.html", ctx)
+    resp = render(request, "crud/_table.html", ctx)
     resp["HX-Trigger"] = "{\"modalClose\": true}"
+    resp["HX-Swap-OOB"] = "true"
     return resp
 
 
@@ -108,7 +124,7 @@ def table_view(request: HttpRequest) -> HttpResponse:
     return render(request, "crud/_table.html", ctx)
 
 
-def create_view(request: HttpRequest) -> HttpResponseBase:
+def create_view(request: HttpRequest) -> HttpResponse:
     config = get_crud(CRUD_SLUG_USERS)
     if not config.can_create(request):
         return HttpResponseForbidden("Forbidden")
@@ -150,7 +166,7 @@ def create_view(request: HttpRequest) -> HttpResponseBase:
     )
 
 
-def edit_view(request: HttpRequest, id: int) -> HttpResponseBase:
+def edit_view(request: HttpRequest, id: int) -> HttpResponse:
     config = get_crud(CRUD_SLUG_USERS)
     if not config.can_edit(request):
         return HttpResponseForbidden("Forbidden")
@@ -159,7 +175,11 @@ def edit_view(request: HttpRequest, id: int) -> HttpResponseBase:
     obj = get_object_or_404(User, pk=id)
 
     if request.method == "POST":
-        form = form_class(request.POST, instance=obj, request_user=request.user)
+        form = form_class(request.POST, instance=obj)
+        if hasattr(form, "set_request_user"):
+            form.set_request_user(request.user)
+        elif hasattr(form, "request_user"):
+            form.request_user = request.user
         if form.is_valid():
             with transaction.atomic():
                 form.save()
@@ -172,13 +192,17 @@ def edit_view(request: HttpRequest, id: int) -> HttpResponseBase:
                 "modal_title": config.get_edit_modal_title(obj),
                 "modal_size": "md",
                 "modal_backdrop_close": False,
-                "form_action": reverse("users_admin:edit", kwargs={"id": obj.pk}),
+                "form_action": reverse("users_admin:edit", args=[obj.pk]),
                 "form": form,
                 "submit_label": config.get_edit_submit_label(),
             },
         )
 
-    form = form_class(instance=obj, request_user=request.user)
+    form = form_class(instance=obj)
+    if hasattr(form, "set_request_user"):
+        form.set_request_user(request.user)
+    elif hasattr(form, "request_user"):
+        form.request_user = request.user
     return render(
         request,
         "partials/modals/modal_form.html",
@@ -186,14 +210,19 @@ def edit_view(request: HttpRequest, id: int) -> HttpResponseBase:
             "modal_title": config.get_edit_modal_title(obj),
             "modal_size": "md",
             "modal_backdrop_close": False,
-            "form_action": reverse("users_admin:edit", kwargs={"id": obj.pk}),
+            "form_action": reverse("users_admin:edit", args=[obj.pk]),
             "form": form,
             "submit_label": config.get_edit_submit_label(),
         },
     )
 
 
-def toggle_view(request: HttpRequest, id: int) -> HttpResponseBase:
+def toggle_view(request: HttpRequest, id: int) -> HttpResponse:
+    """Activar/Desactivar usuario (NO elimina físicamente).
+    
+    IMPORTANTE: Esta vista NO elimina usuarios de la base de datos.
+    Solo cambia el estado is_active para cumplir con políticas de auditoría.
+    """
     config = get_crud(CRUD_SLUG_USERS)
     if not config.can_edit(request):
         return HttpResponseForbidden("Forbidden")
@@ -202,6 +231,7 @@ def toggle_view(request: HttpRequest, id: int) -> HttpResponseBase:
     is_deactivating = obj.is_active
 
     if request.method == "POST":
+        # Validación: no permitir desactivar el propio usuario
         if obj.pk == getattr(request.user, "pk", None) and is_deactivating:
             return render(
                 request,
@@ -214,35 +244,70 @@ def toggle_view(request: HttpRequest, id: int) -> HttpResponseBase:
                     "confirm_label": "Cerrar",
                     "confirm_variant": "secondary",
                     "confirm_message": "No puedes desactivar tu propio usuario.",
-                    "confirm_detail": obj.username,
+                    "confirm_detail": f"Usuario: {obj.username}",
                 },
             )
+        
+        # Validación adicional: proteger superusuarios
+        if obj.is_superuser and is_deactivating:
+            if not request.user.is_superuser:
+                return render(
+                    request,
+                    "partials/modals/modal_confirm.html",
+                    {
+                        "modal_title": "Acción no permitida",
+                        "modal_size": "sm",
+                        "modal_backdrop_close": True,
+                        "confirm_action": None,
+                        "confirm_label": "Cerrar",
+                        "confirm_variant": "secondary",
+                        "confirm_message": "Solo superusuarios pueden desactivar cuentas de administrador.",
+                        "confirm_detail": f"Usuario: {obj.username}",
+                    },
+                )
 
-        obj.is_active = not obj.is_active
-        obj.save(update_fields=["is_active"])
+        with transaction.atomic():
+            obj.is_active = not obj.is_active
+            obj.save(update_fields=["is_active"])
+
         return _hx_modal_success_refresh(request)
 
-    confirm_label = "Desactivar" if is_deactivating else "Activar"
-    confirm_variant = "danger" if is_deactivating else "primary"
-    confirm_message = "¿Deseas desactivar este usuario?" if is_deactivating else "¿Deseas activar este usuario?"
+    # GET: mostrar confirmación
+    confirm_label = "Desactivar Usuario" if is_deactivating else "Activar Usuario"
+    confirm_variant = "danger" if is_deactivating else "success"
+
+    if is_deactivating:
+        confirm_message = (
+            "¿Estás seguro de desactivar este usuario? "
+            "El usuario no podrá acceder al sistema pero su información se conservará para auditoría."
+        )
+    else:
+        confirm_message = "¿Deseas reactivar este usuario? Recuperará el acceso al sistema."
+
+    user_detail = f"{obj.username}"
+    if obj.first_name or obj.last_name:
+        user_detail += f" ({obj.first_name} {obj.last_name})".strip()
+    if obj.email:
+        user_detail += f" - {obj.email}"
 
     return render(
         request,
         "partials/modals/modal_confirm.html",
         {
             "modal_title": config.get_delete_modal_title(obj),
-            "modal_size": "sm",
+            "modal_size": "md",
             "modal_backdrop_close": True,
-            "confirm_action": reverse("users_admin:toggle", kwargs={"id": obj.pk}),
+            "confirm_action": reverse("users_admin:toggle", args=[obj.pk]),
             "confirm_label": confirm_label,
             "confirm_variant": confirm_variant,
             "confirm_message": confirm_message,
-            "confirm_detail": f"{obj.username} ({obj.email or 'sin email'})",
+            "confirm_detail": user_detail,
         },
     )
 
 
-def export_csv_view(request: HttpRequest) -> HttpResponseBase:
+def export_csv_view(request: HttpRequest) -> HttpResponse:
+    """Exportar usuarios a CSV con datos completos para auditoría."""
     config = get_crud(CRUD_SLUG_USERS)
     if not config.can_export(request):
         return HttpResponseForbidden("Forbidden")
@@ -254,17 +319,38 @@ def export_csv_view(request: HttpRequest) -> HttpResponseBase:
     params = config.parse_params(request)
     qs = config.queryset_for_list(request=request, params=params)
 
-    fields = config.get_export_fields() or ["username", "email", "is_active", "date_joined"]
-    headers = config.get_export_headers() or ["Username", "Email", "Activo", "Fecha de alta"]
+    fields = config.get_export_fields() or [
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_active",
+        "is_staff",
+        "is_superuser",
+        "date_joined",
+        "last_login",
+    ]
+    headers = config.get_export_headers() or [
+        "Usuario",
+        "Nombre",
+        "Apellido",
+        "Email",
+        "Activo",
+        "Es Staff",
+        "Es Superusuario",
+        "Fecha Alta",
+        "Último Acceso",
+    ]
     return stream_csv(
         queryset=qs,
         fields=fields,
         headers=headers,
-        filename_base="users",
+        filename_base="usuarios",
     )
 
 
-def export_xlsx_view(request: HttpRequest) -> HttpResponseBase:
+def export_xlsx_view(request: HttpRequest) -> HttpResponse:
+    """Exportar usuarios a Excel con datos completos para auditoría."""
     config = get_crud(CRUD_SLUG_USERS)
     if not config.can_export(request):
         return HttpResponseForbidden("Forbidden")
@@ -276,18 +362,39 @@ def export_xlsx_view(request: HttpRequest) -> HttpResponseBase:
     params = config.parse_params(request)
     qs = config.queryset_for_list(request=request, params=params)
 
-    fields = config.get_export_fields() or ["username", "email", "is_active", "date_joined"]
-    headers = config.get_export_headers() or ["Username", "Email", "Activo", "Fecha de alta"]
+    fields = config.get_export_fields() or [
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_active",
+        "is_staff",
+        "is_superuser",
+        "date_joined",
+        "last_login",
+    ]
+    headers = config.get_export_headers() or [
+        "Usuario",
+        "Nombre",
+        "Apellido",
+        "Email",
+        "Activo",
+        "Es Staff",
+        "Es Superusuario",
+        "Fecha Alta",
+        "Último Acceso",
+    ]
     return build_xlsx(
         queryset=qs,
         fields=fields,
         headers=headers,
-        filename_base="users",
-        sheet_name="Usuarios",
+        filename_base="usuarios",
+        sheet_name="Usuarios del Sistema",
     )
 
 
-def export_pdf_view(request: HttpRequest) -> HttpResponseBase:
+def export_pdf_view(request: HttpRequest) -> HttpResponse:
+    """Exportar usuarios a PDF con datos completos para auditoría."""
     config = get_crud(CRUD_SLUG_USERS)
     if not config.can_export(request):
         return HttpResponseForbidden("Forbidden")
@@ -298,6 +405,36 @@ def export_pdf_view(request: HttpRequest) -> HttpResponseBase:
 
     params = config.parse_params(request)
     qs = config.queryset_for_list(request=request, params=params)
+
+    fields = config.get_export_fields() or [
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_active",
+        "is_staff",
+        "is_superuser",
+        "date_joined",
+        "last_login",
+    ]
+    headers = config.get_export_headers() or [
+        "Usuario",
+        "Nombre",
+        "Apellido",
+        "Email",
+        "Activo",
+        "Es Staff",
+        "Es Superusuario",
+        "Fecha Alta",
+        "Último Acceso",
+    ]
+    return build_pdf_table(
+        queryset=qs,
+        fields=fields,
+        headers=headers,
+        title="Usuarios del Sistema",
+        filename_base="usuarios",
+    )
 
     fields = config.get_export_fields() or ["username", "email", "is_active", "date_joined"]
     headers = config.get_export_headers() or ["Username", "Email", "Activo", "Fecha de alta"]

@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import random
+from datetime import timedelta
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -39,36 +41,37 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 def kpis(request: HttpRequest) -> HttpResponse:
     User = get_user_model()
     user_count = User.objects.count()
-
+    active_users = User.objects.filter(is_active=True).count()
+    
     # Simulación de datos reales
     kpi_list = [
         KpiDef(
-            label="Usuarios",
+            label="Usuarios Totales",
             value=str(user_count),
-            sub_label="Total registrados",
-            badge_text="Activos",
+            sub_label="Registrados",
+            badge_text="Total",
             badge_color="primary"
         ),
         KpiDef(
-            label="Órdenes",
-            value="1,248",
-            sub_label="+4% vs semana",
-            badge_text="Stable",
-            badge_color="info"
+            label="Usuarios Activos",
+            value=str(active_users),
+            sub_label="En plataforma",
+            badge_text="Activos",
+            badge_color="success"
         ),
         KpiDef(
             label="Incidencias",
-            value="7",
+            value="0",
             sub_label="Últimas 24h",
-            badge_text="Atención",
-            badge_color="warning"
+            badge_text="Healthy",
+            badge_color="success"
         ),
         KpiDef(
             label="SLA",
-            value="99.92%",
+            value="100%",
             sub_label="30 días",
-            badge_text="Healthy",
-            badge_color="success"
+            badge_text="Stable",
+            badge_color="info"
         ),
     ]
     return render(request, "dashboard/_kpis.html", {"kpis": kpi_list})
@@ -76,27 +79,30 @@ def kpis(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def charts(request: HttpRequest) -> HttpResponse:
-    # Simulación de datos para gráfico
-    labels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]
+    # Gráfico real: Usuarios registrados últimos 7 días
+    User = get_user_model()
+    today = timezone.now().date()
+    labels = []
+    data_users = []
+    
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        count = User.objects.filter(date_joined__date=day).count()
+        labels.append(day.strftime("%a"))
+        data_users.append(count)
     
     chart_main = ChartDef(
         id="mainChart",
-        title="Rendimiento Semanal",
+        title="Nuevos Usuarios (7 días)",
         type="line",
         labels=labels,
         datasets=[
             ChartDataset(
-                label="Ventas",
-                data=[random.randint(10, 50) for _ in range(7)],
+                label="Registros",
+                data=data_users,
                 color="primary",
                 fill=True
             ),
-            ChartDataset(
-                label="Visitas",
-                data=[random.randint(20, 80) for _ in range(7)],
-                color="info",
-                fill=False
-            )
         ]
     )
 

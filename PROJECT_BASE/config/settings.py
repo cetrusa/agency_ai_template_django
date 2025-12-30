@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     # 1st party apps
     "apps.core.apps.CoreConfig",
     "apps.core.navigation",
+    "apps.accounts",
     "apps.dashboard",
     "apps.orgs",
     "apps.organization_admin",
@@ -89,6 +90,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.middleware.SetupMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

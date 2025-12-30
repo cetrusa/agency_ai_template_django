@@ -63,10 +63,8 @@ Notas HTMX:
         {# Botón "Nuevo" abre modal y trae contenido por HTMX. #}
         <button class="btn btn-primary"
                 hx-get="{{ crud_urls.create }}"
-                hx-target="#appModal .modal-content"
-                hx-trigger="click"
-                data-bs-toggle="modal"
-                data-bs-target="#appModal">
+                hx-target="#modal-host"
+                hx-swap="innerHTML">
           <i class="bi bi-plus-lg me-1"></i>
           Nuevo {{ entity_label|default:"Registro" }}
         </button>

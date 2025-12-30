@@ -9,11 +9,15 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.core.views import setup_wizard
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("setup/", setup_wizard, name="setup_wizard"),
+    # Accounts: profile, password change
+    path("accounts/", include(("apps.accounts.urls", "accounts"), namespace="accounts")),
     # Auth: login, logout, password_change, password_reset, etc.
-    path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts-auth/", include("django.contrib.auth.urls")),
     # Apps
     path("crud-example/", include("apps.crud_example.urls")),
     path("dashboard/", include(("apps.dashboard.urls", "dashboard"), namespace="dashboard")),

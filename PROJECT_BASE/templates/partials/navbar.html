@@ -26,15 +26,6 @@
     </div>
 
     <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-primary btn-sm"
-              type="button"
-              hx-get="{% url 'dashboard:modal_content' %}"
-              hx-target="#modal-host"
-              hx-swap="innerHTML">
-        <i class="bi bi-plus-lg"></i>
-        <span class="d-none d-sm-inline">Nuevo</span>
-      </button>
-
       <div class="dropdown">
         <button class="btn btn-text dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
           <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
@@ -45,6 +36,25 @@
         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
           <li><h6 class="dropdown-header text-uppercase small">Cuenta</h6></li>
           <li><span class="dropdown-item-text small text-muted">{{ request.user.email|default:"Sin email" }}</span></li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{% url 'accounts:profile' %}"
+               hx-get="{% url 'accounts:profile' %}"
+               hx-target="#app-content"
+               hx-swap="innerHTML"
+               hx-push-url="true">
+              <i class="bi bi-person me-2"></i>Mi Perfil
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{% url 'accounts:password_change' %}"
+               hx-get="{% url 'accounts:password_change' %}"
+               hx-target="#app-content"
+               hx-swap="innerHTML"
+               hx-push-url="true">
+              <i class="bi bi-key me-2"></i>Cambiar Contraseña
+            </a>
+          </li>
           <li><hr class="dropdown-divider"></li>
           <li>
             <form method="post" action="{% url 'logout' %}">

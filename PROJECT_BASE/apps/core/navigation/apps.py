@@ -21,7 +21,7 @@ class NavigationConfig(AppConfig):
             icon="bi-building",
             url_name="organization_admin:detail",
             kind="system",
-            permission="orgs.change_organization"
+            permission="core.change_globalconfig"
         ))
         registry.register(Module(
             slug="users",

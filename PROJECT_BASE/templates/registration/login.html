@@ -65,7 +65,9 @@
             <!-- Logo & Header -->
             <div class="text-center mb-4">
               <div class="d-flex justify-content-center mb-3">
-                {% if GLOBAL_CONFIG.logo %}
+                {% if GLOBAL_CONFIG.login_icon %}
+                  <img src="{{ GLOBAL_CONFIG.login_icon.url }}" alt="Logo" class="auth-logo" />
+                {% elif GLOBAL_CONFIG.logo %}
                   <img src="{{ GLOBAL_CONFIG.logo.url }}" alt="Logo" class="auth-logo" />
                 {% else %}
                   <div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle" style="width: 42px; height: 42px;">
@@ -74,7 +76,7 @@
                 {% endif %}
               </div>
               <h4 class="mb-2 ds-title">Bienvenido a {{ GLOBAL_CONFIG.site_name }}! 👋</h4>
-              <p class="ds-muted small">Por favor inicia sesión para continuar.</p>
+              <p class="ds-muted small">{{ GLOBAL_CONFIG.welcome_message }}</p>
             </div>
 
             <!-- Form -->

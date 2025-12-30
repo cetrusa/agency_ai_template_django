@@ -49,6 +49,25 @@ class GlobalConfig(SingletonModel):
         blank=True,
         help_text="Logo para el sidebar/navbar (idealmente SVG o PNG transparente).",
     )
+    
+    # Login / Bienvenida
+    login_icon = models.ImageField(
+        _("Icono Login"),
+        upload_to="branding/",
+        null=True,
+        blank=True,
+        help_text="Icono que aparece en la pantalla de login (opcional).",
+    )
+    welcome_message = models.TextField(
+        _("Mensaje de Bienvenida"),
+        default="Bienvenido a tu plataforma",
+        help_text="Mensaje que aparece en la pantalla de login.",
+    )
+    setup_complete = models.BooleanField(
+        _("Setup Completado"),
+        default=False,
+        help_text="Indica si el asistente de configuración inicial ya se completó.",
+    )
 
     # Tema Visual (Sneat overrides)
     primary_color = models.CharField(

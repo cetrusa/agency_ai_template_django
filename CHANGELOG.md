@@ -6,6 +6,9 @@ Este proyecto sigue un esquema simple de versionado semántico: `vMAJOR.MINOR.PA
 
 ### Incluido
 
+- **Organization Admin Redesign**: Transformación del módulo de organización en un panel de configuración global (Branding, Colores, Contacto, Redes Sociales).
+- **GlobalConfig Model**: Implementación de modelo Singleton para gestión centralizada de la configuración de la instancia.
+- **UI Improvements**: Mejoras en Login (iconos, toggle password) y Dashboard.
 - Django SSR (Templates) + HTMX como base (sin SPA, sin Node)
 - CRUD Kit Enterprise V1 (list + table partial) con filtros/orden/paginación
 - Modales HTMX reutilizables (forms + confirm)

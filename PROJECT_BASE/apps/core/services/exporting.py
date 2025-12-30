@@ -4,6 +4,7 @@ import csv
 import importlib
 from io import BytesIO
 from typing import Iterable
+from datetime import datetime
 
 from django.http import FileResponse, StreamingHttpResponse
 from django.utils import timezone
@@ -21,6 +22,13 @@ def _default_filename(base: str, ext: str) -> str:
     safe = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in base.strip())
     safe = safe or "export"
     return f"{safe}_{ts}.{ext}"
+
+
+def _convert_datetime(value):
+    """Convierte datetimes con timezone a naive para Excel."""
+    if isinstance(value, datetime) and value.tzinfo is not None:
+        return value.replace(tzinfo=None)
+    return value
 
 
 def stream_csv(
@@ -74,7 +82,9 @@ def build_xlsx(
 
     ws.append(headers)
     for row in queryset.values_list(*fields).iterator(chunk_size=2000):
-        ws.append(list(row))
+        # Convertir datetimes con timezone a naive para Excel
+        converted_row = [_convert_datetime(v) for v in row]
+        ws.append(list(converted_row))
 
     bio = BytesIO()
     wb.save(bio)

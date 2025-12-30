@@ -25,17 +25,44 @@ IF %ERRORLEVEL% NEQ 0 (
 
 echo [OK] Docker activo.
 
-:: 3. Levantar servicios base (db + web)
-echo [INFO] Levantando servicios base (db, web)...
-docker compose up -d db web
-
+:: 3. Moverse a PROJECT_BASE
+pushd "%~dp0..\PROJECT_BASE" >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Error levantando contenedores.
+    echo [ERROR] No se pudo acceder a PROJECT_BASE.
     pause
     exit /b 1
 )
 
-:: 4. Mostrar estado
+:: 4. Levantar servicios base (db + web)
+echo [INFO] Construyendo y levantando servicios (db, web)...
+docker compose up --build -d web db
+
+IF %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Error levantando contenedores.
+    popd
+    pause
+    exit /b 1
+)
+
+:: 5. Esperar que BD este lista
+echo [INFO] Esperando a que la base de datos este lista...
+timeout /t 5 /nobreak >nul
+
+:: 6. Ejecutar migraciones
+echo [INFO] Ejecutando migraciones...
+docker compose exec web python manage.py migrate
+IF %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Fallo en migraciones.
+    popd
+    pause
+    exit /b 1
+)
+
+:: 7. Bootstrap de desarrollo
+echo [INFO] Bootstrap de desarrollo (empresa + usuario demo)...
+docker compose exec web python manage.py bootstrap_dev --noinput --with_samples --samples 10
+
+:: 8. Mostrar estado
 echo.
 echo =========================================
 echo  Contenedores activos:
@@ -43,9 +70,21 @@ echo =========================================
 docker compose ps
 
 echo.
-echo [OK] Proyecto levantado correctamente.
-echo Accede a: http://localhost:8000
+echo =========================================
+echo  PROYECTO LEVANTADO
+echo =========================================
+echo.
+echo  URL:  http://localhost:8000
+echo.
+echo  Credenciales: ver output de bootstrap_dev arriba
+echo.
+echo  Comandos utiles:
+echo    docker compose ps          - Ver estado
+echo    docker compose logs -f web - Ver logs
+echo    stop.bat                   - Detener proyecto
+echo.
 echo =========================================
 
+popd
 pause
 ENDLOCAL

@@ -6,11 +6,14 @@ from .models import GlobalConfig
 
 @admin.register(GlobalConfig)
 class GlobalConfigAdmin(admin.ModelAdmin):
-    list_display = ["site_name", "color_preview", "navbar_fixed"]
+    list_display = ["site_name", "color_preview", "navbar_fixed", "setup_complete"]
     fieldsets = (
-        ("Identidad", {"fields": ("site_name", "logo")}),
-        ("Tema Visual", {"fields": ("primary_color",)}),
+        ("Identidad", {"fields": ("site_name", "logo", "login_icon", "welcome_message")}),
+        ("Tema Visual", {"fields": ("primary_color", "secondary_color")}),
+        ("Contacto", {"fields": ("company_address", "company_phone", "company_email")}),
+        ("Redes Sociales", {"fields": ("social_facebook", "social_twitter", "social_instagram", "social_linkedin")}),
         ("Layout", {"fields": ("navbar_fixed", "sidebar_collapsed")}),
+        ("Sistema", {"fields": ("setup_complete",)}),
     )
 
     def color_preview(self, obj):
