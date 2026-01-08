@@ -17,12 +17,16 @@ urlpatterns = [
     # Accounts: profile, password change
     path("accounts/", include(("apps.accounts.urls", "accounts"), namespace="accounts")),
     # Auth: login, logout, password_change, password_reset, etc.
-    path("accounts-auth/", include("django.contrib.auth.urls")),
+    path(
+        "accounts-auth/",
+        include(("django.contrib.auth.urls", "accounts_auth"), namespace="accounts-auth"),
+    ),
     # Apps
     path("crud-example/", include("apps.crud_example.urls")),
     path("dashboard/", include(("apps.dashboard.urls", "dashboard"), namespace="dashboard")),
     path("organization/", include("apps.organization_admin.urls")),
-    path("users/", include("apps.users_admin.urls")),
+    path("usuarios/", include(("apps.usuarios.urls", "usuarios"), namespace="usuarios")),
+    path("orgs/", include(("apps.orgs.urls", "orgs"), namespace="orgs")),
     path("", include(("apps.dashboard.urls", "dashboard"), namespace="home")),  # Default redirect (namespace distinto para evitar colisión)
 ]
 

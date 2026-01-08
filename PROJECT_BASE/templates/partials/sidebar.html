@@ -6,12 +6,12 @@ Regla:
 - HTMX carga el contenido en #app-content y empuja URL
 {% endcomment %}
 {% load static %}
-<aside class="app-sidebar p-3">
-  <div class="mb-3 ds-muted small">MENÚ</div>
+<aside class="app-sidebar p-3 bg-body border-end shadow-sm rounded-3">
+  <div class="mb-3 ds-muted text-uppercase small fw-semibold">MENÚ</div>
 
-  <nav class="nav flex-column gap-1">
+  <nav class="nav nav-pills flex-column gap-2 small">
     {% for module in request.navigation_modules %}
-      <a class="nav-link d-flex align-items-center gap-2"
+      <a class="nav-link d-flex align-items-center gap-2 px-3 py-2 rounded-3"
          href="{% url module.url_name %}"
          hx-get="{% url module.url_name %}"
          hx-target="#app-content"
@@ -23,26 +23,19 @@ Regla:
     {% endfor %}
 
     <!-- Accesos Directos (Manual) -->
-    <a class="nav-link d-flex align-items-center gap-2" href="{% url 'organization_admin:detail' %}">
+    <a class="nav-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" href="{% url 'organization_admin:detail' %}">
       <i class="bi bi-building"></i>
       <span class="sidebar-label">Empresa</span>
-    </a>
-    <a class="nav-link d-flex align-items-center gap-2" href="{% url 'users_admin:list' %}">
-      <i class="bi bi-people"></i>
-      <span class="sidebar-label">Usuarios</span>
     </a>
   </nav>
 
   <hr class="my-4" />
 
-  <div class="ds-muted small mb-2">ACCIONES</div>
-  <div class="d-grid gap-2">
+  <div class="ds-muted text-uppercase small fw-semibold mb-2">ACCIONES</div>
+  <div class="d-grid gap-2 pt-1">
     <a class="btn btn-outline-secondary btn-sm"
        href="{% url 'dashboard:home' %}"
-       hx-get="{% url 'dashboard:home' %}"
-       hx-target="#app-content"
-       hx-swap="innerHTML"
-       hx-push-url="true">
+       hx-boost="false">
       <i class="bi bi-house"></i> Inicio
     </a>
   </div>

@@ -23,34 +23,37 @@ def _check_permission(user, perm: str) -> bool:
         return True
     return user.has_perm(perm)
 
+
 @login_required
 def detail(request: HttpRequest) -> HttpResponse:
     """Mostrar detalles de la configuración global (singleton)."""
     # Validar permisos: usuario debe ser superusuario o tener change_globalconfig
     if not _check_permission(request.user, "core.change_globalconfig"):
         return HttpResponseForbidden("No tienes permisos para acceder a esta sección")
-    
+
     config = GlobalConfig.load()
-    
-    context = {
-        "config": config,
-        "page_title": "Configuración de Empresa"
-    }
-    
+
+    context = {"config": config, "page_title": "Configuración de Empresa"}
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "organization_admin/settings.html", context)
-        
-    return render(request, "pages/shell.html", {"content_template": "organization_admin/settings.html", **context})
+
+    return render(
+        request,
+        "pages/shell.html",
+        {"content_template": "organization_admin/settings.html", **context},
+    )
+
 
 @login_required
-def """Editar configuración global (singleton)."""
-    edit(request: HttpRequest) -> HttpResponse:
+def edit(request: HttpRequest) -> HttpResponse:
+    """Editar configuración global (singleton)."""
     # Validar permisos: usuario debe ser superusuario o tener change_globalconfig
     if not _check_permission(request.user, "core.change_globalconfig"):
         return HttpResponseForbidden("No tienes permisos para acceder a esta sección")
-    
+
     config = GlobalConfig.load()
-    
+
     if request.method == "POST":
         form = GlobalConfigForm(request.POST, request.FILES, instance=config)
         if form.is_valid():
@@ -59,14 +62,18 @@ def """Editar configuración global (singleton)."""
             return redirect("organization_admin:detail")
     else:
         form = GlobalConfigForm(instance=config)
-    
+
     context = {
-        "form": form, de Empresa
+        "form": form,
         "config": config,
-        "page_title": "Editar Configuración"
+        "page_title": "Editar Configuración de Empresa",
     }
-    
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "organization_admin/form.html", context)
-        
-    return render(request, "pages/shell.html", {"content_template": "organization_admin/form.html", **context})
+
+    return render(
+        request,
+        "pages/shell.html",
+        {"content_template": "organization_admin/form.html", **context},
+    )

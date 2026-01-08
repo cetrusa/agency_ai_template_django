@@ -77,8 +77,8 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.orgs",
     "apps.organization_admin",
-    "apps.users_admin",
     "apps.crud_example",
+    "apps.usuarios",
 ]
 
 
@@ -118,30 +118,21 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 
-# Database (plantilla lista para docker-compose).
-# En proyectos reales se recomienda ajustar parámetros (pooling, timeouts, etc.).
+# Database: SQLite por defecto para facilitar setup inicial estilo WordPress/Moodle
+# En producción o para proyectos avanzados, configura PostgreSQL/MySQL via .env
 DATABASES = {
     "default": {
-        "ENGINE": os.getenv("DJANGO_DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.getenv("POSTGRES_DB", os.getenv("DJANGO_DB_NAME", "")),
-        "USER": os.getenv("POSTGRES_USER", os.getenv("DJANGO_DB_USER", "")),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", os.getenv("DJANGO_DB_PASSWORD", "")),
-        "HOST": os.getenv("DJANGO_DB_HOST", "db"),
-        "PORT": os.getenv("DJANGO_DB_PORT", "5432"),
+        "ENGINE": os.getenv("DJANGO_DB_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.getenv("DJANGO_DB_NAME", str(BASE_DIR / "db.sqlite3")),
+        "USER": os.getenv("DJANGO_DB_USER", ""),
+        "PASSWORD": os.getenv("DJANGO_DB_PASSWORD", ""),
+        "HOST": os.getenv("DJANGO_DB_HOST", ""),
+        "PORT": os.getenv("DJANGO_DB_PORT", ""),
     }
 }
 
-# DX: si estás en desarrollo local (DEBUG=True) y no configuraste Postgres,
-# permite usar SQLite para poder correr checks/migraciones sin docker.
-if DEBUG and not DATABASES["default"]["NAME"]:
-    engine = (DATABASES["default"]["ENGINE"] or "").strip()
-    if engine == "django.db.backends.postgresql":
-        DATABASES["default"] = {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": str(BASE_DIR / "db.sqlite3"),
-        }
-
-if not DEBUG:
+# Validación solo si usas PostgreSQL/MySQL explícitamente (no SQLite)
+if not DEBUG and DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3":
     missing = []
     if not DATABASES["default"]["NAME"]:
         missing.append("POSTGRES_DB (o DJANGO_DB_NAME)")

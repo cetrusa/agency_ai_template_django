@@ -64,7 +64,7 @@ class OrganizationCrudConfig(CrudConfig):
 
     export_enabled = False  # No aplica para singleton
     export_fields = []
-    export_headers = []
+    export_headers = None  # No aplica para singleton
     export_formats = set()
 
     def get_base_queryset(self, request: HttpRequest) -> QuerySet:
