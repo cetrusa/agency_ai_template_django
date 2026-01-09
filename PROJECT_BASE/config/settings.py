@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "apps.organization_admin",
     "apps.crud_example",
     "apps.usuarios",
+    "apps.users_admin",
 ]
 
 

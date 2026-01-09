@@ -81,13 +81,40 @@ Sigue las instrucciones en pantalla para definir email y contraseña.
 ## 4. Ejecutar el Proyecto
 
 ### Modo A: Docker (Full Stack)
-Levanta la base de datos (PostgreSQL), Redis y el servidor Web.
+Levanta Redis y el servidor Web. La base de datos puede ser:
+
+- PostgreSQL dentro de Docker (perfil `postgres`), o
+- MySQL/MariaDB en el host (ej. Laragon) usando `DJANGO_DB_HOST=host.docker.internal`.
 ```bash
 # Desde la raíz del proyecto (donde está docker-compose.yml dentro de PROJECT_BASE)
 cd PROJECT_BASE
-docker-compose up --build
+docker compose up --build
 ```
 *   Accede a: `http://localhost:8000`
+
+#### Variante A1: Docker + MySQL del host (Laragon 3306)
+
+En `PROJECT_BASE/.env`:
+
+- `DJANGO_DB_ENGINE=django.db.backends.mysql`
+- `DJANGO_DB_HOST=host.docker.internal`
+- `DJANGO_DB_PORT=3306`
+
+Luego:
+
+```bash
+cd PROJECT_BASE
+docker compose up -d --build web redis
+docker compose exec -T web python manage.py migrate
+```
+
+#### Variante A2: Docker + PostgreSQL (perfil `postgres`)
+
+```bash
+cd PROJECT_BASE
+docker compose --profile postgres up -d --build web db redis
+docker compose exec -T web python manage.py migrate
+```
 
 ### Modo B: Híbrido (DB en Docker, Web Local)
 Ideal para desarrollo rápido (debugging, hot-reload).
@@ -95,7 +122,7 @@ Ideal para desarrollo rápido (debugging, hot-reload).
 1.  Levanta solo la base de datos:
     ```bash
     cd PROJECT_BASE
-    docker-compose up -d db
+    docker compose --profile postgres up -d db
     ```
 2.  Ejecuta el servidor Django localmente:
     ```bash
